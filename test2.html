@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Блокчейн Аккредитив</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { margin: 10px 0; padding: 10px; width: 100%; }
+    .container { max-width: 500px; margin: auto; }
+    .account-info { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Модуль аккредитива</h1>
+    <p>Используйте этот интерфейс для создания и управления аккредитивами на блокчейне.</p>
+
+    <h3>Создать аккредитив</h3>
+    <input id="beneficiary" type="text" placeholder="Получатель">
+    <input id="amount" type="number" placeholder="Сумма (ETH)">
+    <button onclick="createLetterOfCredit()">Создать аккредитив</button>
+
+    <h3>Утвердить Аккредитив</h3>
+    <input id="locId" type="text" placeholder="Идентификатор аккредитива">
+    <button onclick="approveLetterOfCredit()">Утвердить аккредитив</button>
+
+    <div id="output"></div>
+
+    <div class="account-info">
+      <h3>Информация о кошельке</h3>
+      <p><strong>Адрес кошелька:</strong> <span id="walletAddress">Загрузка...</span></p>
+      <p><strong>Баланс:</strong> <span id="walletBalance">Загрузка...</span> ETH</p>
+    </div>
+  </div>
+
+  <script>
+    let web3;
+    let contract;
+    const contractABI = [
+      {
+        "inputs": [
+          { "internalType": "address", "name": "_beneficiary", "type": "address" },
+          { "internalType": "uint256", "name": "_amount", "type": "uint256" }
+        ],
+        "name": "createLetterOfCredit",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "uint256", "name": "_locId", "type": "uint256" }],
+        "name": "approveLetterOfCredit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+    const contractAddress = "0xYourContractAddress"; // Replace with deployed contract address
+
+    // Initialize Web3 and connect to MetaMask
+    window.addEventListener('load', async () => {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.enable();
+        contract = new web3.eth.Contract(contractABI, contractAddress);
+
+        // Get and display wallet address and balance
+        await updateWalletInfo();
+      } else {
+        document.getElementById('output').innerText = "MetaMask not detected.";
+      }
+    });
+
+    // Function to update wallet info (address and balance)
+    async function updateWalletInfo() {
+      const accounts = await web3.eth.getAccounts();
+      if (accounts.length === 0) {
+        document.getElementById('walletAddress').innerText = 'Не подключено';
+        document.getElementById('walletBalance').innerText = '0';
+      } else {
+        const walletAddress = accounts[0];
+        document.getElementById('walletAddress').innerText = walletAddress;
+
+        // Get the balance in ETH
+        const balance = await web3.eth.getBalance(walletAddress);
+        const balanceInEther = web3.utils.fromWei(balance, 'ether');
+        document.getElementById('walletBalance').innerText = balanceInEther;
+      }
+    }
+
+    async function createLetterOfCredit() {
+      const accounts = await web3.eth.getAccounts();
+      const beneficiary = document.getElementById('beneficiary').value;
+      const amount = web3.utils.toWei(document.getElementById('amount').value, 'ether');
+
+      try {
+        const locId = await contract.methods.createLetterOfCredit(beneficiary, amount).send({ from: accounts[0] });
+        document.getElementById('output').innerText = `LoC created with ID: ${locId}`;
+      } catch (error) {
+        document.getElementById('output').innerText = `Error: ${error.message}`;
+      }
+    }
+
+    async function approveLetterOfCredit() {
+      const accounts = await web3.eth.getAccounts();
+      const locId = document.getElementById('locId').value;
+
+      try {
+        await contract.methods.approveLetterOfCredit(locId).send({ from: accounts[0] });
+        document.getElementById('output').innerText = `LoC ${locId} approved.`;
+      } catch (error) {
+        document.getElementById('output').innerText = `Error: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
