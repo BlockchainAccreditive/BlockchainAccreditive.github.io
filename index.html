@@ -90,7 +90,7 @@
       // Выводим информацию о кошельке на страницу
       document.getElementById('walletInfo').innerHTML = `
         <h3 style="color: blue;">Wallet Address</h3>
-        <p style="color:green;">${walletAddress}</p>
+        <p style="color:green;" onclick="copyAdress()">${walletAddress}</p>
         <h3 style="color: blue;">Balance</h3>
         <p style="color: green;">${balanceInEther} ETH</p>
         <h3 style="color: blue;">Current Network</h3>
