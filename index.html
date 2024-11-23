@@ -17,7 +17,7 @@
 </head>
 <body style="font-family: monospace;">
   <div class="container">
-    <h1>Blockchain Accreditive</h1>
+    <h1 style="color: white;">Blockchain Accreditive</h1>
 
     <!-- MetaMask Wallet Section -->
     <h2>Wallet Info</h2>
@@ -26,13 +26,13 @@
     <div id="walletInfo" class="wallet-info"></div>
 
     <!-- Letter of Credit Section -->
-    <h2>Accreditive</h2>
-    <h3>Create</h3>
+    <h2 style="color: white;">Accreditive</h2>
+    <h3 style="color: white;">Create</h3>
     <input id="beneficiary" type="text" placeholder="Beneficiary Address (e.g., 0x123...)">
     <input id="amount" type="number" placeholder="Amount (ETH)">
     <button onclick="createLetterOfCredit()">Create Accreditive</button>
 
-    <h3>Approve Accreditive</h3>
+    <h3 style="color: white;">Approve Accreditive</h3>
     <input id="locId" type="text" placeholder="Accreditive ID">
     <button onclick="approveLetterOfCredit()">Approve Accreditive</button>
 
@@ -90,7 +90,7 @@
       // Выводим информацию о кошельке на страницу
       document.getElementById('walletInfo').innerHTML = `
         <h3>Wallet Address</h3>
-        <p>${walletAddress}</p>
+        <p style="color:green;">${walletAddress}</p>
         <h3>Balance</h3>
         <p>${balanceInEther} ETH</p>
         <h3>Current Network</h3>
