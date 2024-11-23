@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetaMask Wallet Info and Letter of Credit</title>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .container { max-width: 600px; margin: auto; }
+    button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+    .output { margin-top: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; }
+    .network { margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MetaMask Wallet Info and Letter of Credit</h1>
+    <button onclick="getWalletInfo()">Get Wallet Info</button>
+    <div id="output" class="output"></div>
+
+    <h2>Create Letter of Credit</h2>
+    <input id="beneficiary" type="text" placeholder="Beneficiary Address" />
+    <input id="amount" type="number" placeholder="Amount (ETH)" />
+    <button onclick="createLetterOfCredit()">Create Letter of Credit</button>
+
+    <h2>Approve Letter of Credit</h2>
+    <input id="locId" type="text" placeholder="Letter of Credit ID" />
+    <button onclick="approveLetterOfCredit()">Approve Letter of Credit</button>
+
+    <div id="locOutput" class="output"></div>
+  </div>
+
+  <script>
+    let web3;
+    let contract;
+    const contractABI = [
+      {
+        "inputs": [
+          { "internalType": "address", "name": "_beneficiary", "type": "address" },
+          { "internalType": "uint256", "name": "_amount", "type": "uint256" }
+        ],
+        "name": "createLetterOfCredit",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "uint256", "name": "_locId", "type": "uint256" }],
+        "name": "approveLetterOfCredit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+    const contractAddress = "0xYourContractAddress"; // Replace with deployed contract address
+
+    // Initialize Web3
+    if (window.ethereum) {
+      web3 = new Web3(window.ethereum);
+    } else {
+      document.getElementById('output').innerText = "MetaMask is not detected. Please install MetaMask.";
+      throw new Error("MetaMask not found");
+    }
+
+    // Get wallet info and display it
+    async function getWalletInfo() {
+      try {
+        // Request access to MetaMask
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        const account = accounts[0];
+        const balanceInWei = await web3.eth.getBalance(account);
+        const balanceInEther = web3.utils.fromWei(balanceInWei, 'ether');
+
+        // Add wallet address and balance to output
+        let output = `<h3>Wallet Address</h3><p>${account}</p>`;
+        output += `<h3>Current Network Balance</h3><p>${balanceInEther} ETH</p>`;
+
+        // Get network ID
+        const chainId = await web3.eth.getChainId();
+        const networkName = getNetworkName(chainId);
+        output += `<h3>Current Network</h3><p>${networkName} (Chain ID: ${chainId})</p>`;
+
+        // Display in output
+        document.getElementById('output').innerHTML = output;
+      } catch (error) {
+        console.error(error);
+        document.getElementById('output').innerText = `Error: ${error.message}`;
+      }
+    }
+
+    // Map chain IDs to network names
+    function getNetworkName(chainId) {
+      const networks = {
+        1: "Ethereum Mainnet",
+        3: "Ropsten",
+        4: "Rinkeby",
+        5: "Goerli",
+        42: "Kovan",
+        11155111: "Sepolia",
+        1337: "Localhost (Ganache)",
+        56: "Binance Smart Chain",
+        137: "Polygon Mainnet",
+      };
+      return networks[chainId] || "Unknown Network";
+    }
+
+    // Function to create a letter of credit
+    async function createLetterOfCredit() {
+      const accounts = await web3.eth.getAccounts();
+      const beneficiary = document.getElementById('beneficiary').value;
+      const amount = web3.utils.toWei(document.getElementById('amount').value, 'ether');
+
+      try {
+        const locId = await contract.methods.createLetterOfCredit(beneficiary, amount).send({ from: accounts[0] });
+        document.getElementById('locOutput').innerText = `Letter of Credit created with ID: ${locId.events.LocCreated.returnValues.locId}`;
+      } catch (error) {
+        document.getElementById('locOutput').innerText = `Error: ${error.message}`;
+      }
+    }
+
+    // Function to approve a letter of credit
+    async function approveLetterOfCredit() {
+      const accounts = await web3.eth.getAccounts();
+      const locId = document.getElementById('locId').value;
+
+      try {
+        await contract.methods.approveLetterOfCredit(locId).send({ from: accounts[0] });
+        document.getElementById('locOutput').innerText = `Letter of Credit ID ${locId} approved.`;
+      } catch (error) {
+        document.getElementById('locOutput').innerText = `Error: ${error.message}`;
+      }
+    }
+
+    // Initialize the contract
+    window.addEventListener('load', async () => {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.enable(); // Request MetaMask connection
+        contract = new web3.eth.Contract(contractABI, contractAddress); // Initialize the contract
+      }
+    });
+  </script>
+</body>
+</html>
