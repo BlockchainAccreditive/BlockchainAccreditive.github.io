@@ -100,6 +100,18 @@ left:-3px;border-radius:5px;
   let walletAddress;       // Переменная для хранения адреса кошелька MetaMask
   let contract;            // Переменная для хранения экземпляра контракта
 
+    //  Пакет Документов
+    function displayUploadedDocs() {
+      const files = document.getElementById("documents").files;
+      const docList = document.getElementById("docList");
+      docList.innerHTML = ""; // Clear existing list
+      Array.from(files).forEach((file, index) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${index + 1}. ${file.name}`;
+        docList.appendChild(listItem);
+      });
+    }
+
   // Указание ABI контракта и адреса контракта (нужно заменить на реальные данные)
   const contractABI = [
     {
