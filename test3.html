@@ -238,13 +238,13 @@ left:-3px;border-radius:5px;
   <!-- Ползунок (range input) с полной стилизацией -->
   <input id="expiryRange" type="range" min="1" max="365" value="30" oninput="updateExpiryValue()" style="
     -webkit-appearance: none; /* Убираем стандартный стиль браузера */
-    width: 100%; /* Ширина ползунка */
+    width: 94%; /* Ширина ползунка */
     height: 8px; /* Высота дорожки ползунка */
-    background: linear-gradient(90deg, #FFCC70 0%, #C850C0 50%, #4158D0 100%); /* Градиент дорожки */
+    background: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%) /* Градиент дорожки */
     border-radius: 10px; /* Скругление углов дорожки */
     outline: none; /* Убираем контур при фокусе */
     cursor: pointer; /* Указатель курсора при наведении */
-    margin-top: 10px; /* Отступ сверху */
+    margin-top: 6px; /* Отступ сверху */
     transition: background 0.3s ease; /* Плавная смена фона */
     /* Стилизация бегунка */
     &::-webkit-slider-thumb {
@@ -254,7 +254,7 @@ left:-3px;border-radius:5px;
       height: 20px; /* Высота бегунка */
       background: yellow; /* Цвет бегунка */
       border-radius: 50%; /* Скругление бегунка (круг) */
-      border: 2px solid blue; /* Синяя обводка */
+      /*border: 2px solid blue;*/ /* Синяя обводка */
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.5); /* Лёгкая тень для объёма */
       cursor: pointer; /* Указатель при наведении */
       transition: transform 0.2s ease; /* Анимация при наведении */
