@@ -57,6 +57,16 @@ input#expiryRange {
   <div class="container">
     <h1 style="color: white;">Blockchain Accreditive</h1>
 
+
+    <!-- Document Upload Section -->
+    <div class="documents">
+      <label for="documents">Supporting Documents:</label>
+      <input id="documents" type="file" multiple accept=".pdf,.doc,.docx,.jpg,.png" onchange="displayUploadedDocs()" />
+      <div id="uploadedDocs" class="uploaded-docs">
+        <ul id="docList"></ul>
+      </div>
+    </div>
+
     <!-- MetaMask Wallet Section -->
     <h2 style="color: white;">Wallet Info</h2>
         <!--<button onclick="getWalletInfo()">Показать</button>-->
