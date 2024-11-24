@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertical Accordion (Dynamic Height)</title>
+    <style>
+        /* Сброс стилей, чтобы убрать отступы и обводки */
+
+
+        /* Общие стили для всего документа */
+        body, h1 {
+            margin: 0;
+            padding: 0;
+            font-family: monospace;
+        }
+
+        /* Основной контейнер для аккордеона */
+        .accordion {
+            width: 100%; /* Ширина аккордеона 100% */
+            background-color: transparent; /* Убираем фон */
+            border-radius: 0; /* Без скруглений */
+            overflow: hidden; /* Убирает все, что выходит за пределы контейнера */
+        }
+
+        /* Стиль для каждого элемента аккордеона */
+        .accordion-item {
+            border-bottom: 1px solid #ddd; /* Линия между элементами */
+        }
+
+        /* Стиль для заголовка (кнопки) каждого аккордеона */
+        .accordion-header {
+            background-color: #007BFF; /* Цвет фона кнопки */
+            color: white; /* Цвет текста */
+            padding: 10px 15px; /* Отступы внутри кнопки */
+            cursor: pointer; /* Курсор в виде руки при наведении */
+            font-size: 16px; /* Размер шрифта */
+            text-align: left; /* Выравнивание текста по левому краю */
+            transition: background-color 0.3s; /* Плавное изменение цвета фона */
+        }
+
+        /* Эффект при наведении на кнопку аккордеона */
+        .accordion-header:hover {
+            background-color: #0056b3; /* Цвет фона при наведении */
+        }
+
+        /* Стиль для содержимого аккордеона */
+        .accordion-content {
+            padding: 10px 15px; /* Отступы внутри содержимого */
+            background-color: transparent; /* Убираем фон содержимого */
+            overflow: hidden; /* Прячем содержимое, которое выходит за пределы */
+            max-height: 0; /* Изначально скрыто (высота = 0) */
+            transition: max-height 1s ease-out; /* Плавное изменение максимальной высоты */
+        }
+
+        /* Когда элемент открыт, показываем содержимое */
+        .accordion-item.open .accordion-content {
+            max-height: 1000px; /* Ограничение максимальной высоты для анимации */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Контейнер для всего аккордеона -->
+    <div class="accordion">
+        
+        <!-- Первый элемент аккордеона -->
+        <div class="accordion-item">
+            <!-- Заголовок первого элемента -->
+            <div class="accordion-header">DOCUMENTS</div>
+            <!-- Содержимое первого элемента -->
+            <div class="accordion-content">
+                <p>This is the content of Section 1.</p>
+                <p>This section has a few lines of text.</p>
+            </div>
+        </div>
+
+        <!-- Второй элемент аккордеона -->
+        <div class="accordion-item">
+            <!-- Заголовок второго элемента -->
+            <div class="accordion-header">WALLET</div>
+            <!-- Содержимое второго элемента -->
+            <div class="accordion-content">
+                <p>This is the content of Section 2. It is a bit longer than the first section.</p>
+                <p>Here is some additional text to make it taller.</p>
+            </div>
+        </div>
+
+        <!-- Третий элемент аккордеона -->
+        <div class="accordion-item">
+            <!-- Заголовок третьего элемента -->
+            <div class="accordion-header">ACCREDITIVE</div>
+            <!-- Содержимое третьего элемента -->
+            <div class="accordion-content">
+                <p>This is the content of Section 3. This section is the longest.</p>
+                <p>It contains several paragraphs, making the height of this section quite large.</p>
+                <p>It will dynamically adjust its height based on the amount of content inside it.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Получаем все заголовки аккордеона
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+        // Добавляем обработчик событий для каждого заголовка
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                // Получаем родительский элемент (сам аккордеон)
+                const item = this.parentElement;
+                
+                // Переключаем класс "open" на текущем элементе
+                item.classList.toggle('open');
+                
+                // Получаем содержимое секции
+                const content = item.querySelector('.accordion-content');
+                
+                // Если секция открывается, устанавливаем max-height
+                if (item.classList.contains('open')) {
+                    // Для плавного раскрытия рассчитываем максимальную высоту
+                    const contentHeight = content.scrollHeight;
+                    content.style.maxHeight = `${contentHeight}px`; // Устанавливаем максимальную высоту
+                } else {
+                    // Если секция закрывается, сбрасываем max-height
+                    content.style.maxHeight = '0'; // Закрываем секцию
+                }
+            });
+        });
+    </script>
+
+ </body>
+</html>
