@@ -64,7 +64,7 @@ input#expiryRange:focus{left: unset;}
 	align-items: center;
 }
 .upload-files-container {
-	
+
 	width: 420px;
 	padding: 30px 60px;
 	border-radius: 40px;
@@ -408,7 +408,7 @@ left:-3px;border-radius:5px;
     var div = document.createElement('div');
     return (('draggable' in div) || ('ondragstart' in div && 'ondrop' in div)) && 'FormData' in window && 'FileReader' in window;
   }();
-  
+
   let draggableFileArea = document.querySelector(".drag-file-area");
   let browseFileText = document.querySelector(".browse-files");
   let uploadIcon = document.querySelector(".upload-icon");
@@ -423,12 +423,12 @@ left:-3px;border-radius:5px;
   let removeFileButton = document.querySelector(".remove-file-icon");
   let uploadButton = document.querySelector(".upload-button");
   let fileFlag = 0;
-  
+
   fileInput.addEventListener("click", () => {
     fileInput.value = '';
     console.log(fileInput.value);
   });
-  
+
   fileInput.addEventListener("change", e => {
     console.log(" > " + fileInput.value)
     uploadIcon.innerHTML = 'check_circle';
@@ -441,7 +441,7 @@ left:-3px;border-radius:5px;
     progressBar.style.width = 0;
     fileFlag = 0;
   });
-  
+
   uploadButton.addEventListener("click", () => {
     let isFileUploaded = fileInput.value;
     if(isFileUploaded != '') {
@@ -463,11 +463,11 @@ left:-3px;border-radius:5px;
       cannotUploadMessage.style.cssText = "display: flex; animation: fadeIn linear 1.5s;";
     }
   });
-  
+
   cancelAlertButton.addEventListener("click", () => {
     cannotUploadMessage.style.cssText = "display: none;";
   });
-  
+
   if(isAdvancedUpload) {
     ["drag", "dragstart", "dragend", "dragover", "dragenter", "dragleave", "drop"].forEach( evt => 
       draggableFileArea.addEventListener(evt, e => {
@@ -475,7 +475,7 @@ left:-3px;border-radius:5px;
         e.stopPropagation();
       })
     );
-  
+
     ["dragover", "dragenter"].forEach( evt => {
       draggableFileArea.addEventListener(evt, e => {
         e.preventDefault();
@@ -484,13 +484,13 @@ left:-3px;border-radius:5px;
         dragDropText.innerHTML = 'Drop your file here!';
       });
     });
-  
+
     draggableFileArea.addEventListener("drop", e => {
       uploadIcon.innerHTML = 'check_circle';
-      dragDropText.innerHTML = 'Documents dropped Successfully!';
-      document.querySelector(".label").innerHTML = `<span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: -23px; left: -20px;"> browse file</span> </span>`;
+      dragDropText.innerHTML = 'File Dropped Successfully!';
+      document.querySelector(".label").innerHTML = `drag & drop or <span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: -23px; left: -20px;"> browse file</span> </span>`;
       uploadButton.innerHTML = `Upload`;
-      
+
       let files = e.dataTransfer.files;
       fileInput.files = files;
       console.log(files[0].name + " " + files[0].size);
@@ -502,7 +502,7 @@ left:-3px;border-radius:5px;
       fileFlag = 0;
     });
   }
-  
+
   removeFileButton.addEventListener("click", () => {
     uploadedFile.style.cssText = "display: none;";
     fileInput.value = '';
