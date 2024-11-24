@@ -168,6 +168,8 @@ left:-3px;border-radius:5px;
       // Получаем данные с формы
       const beneficiary = document.getElementById('beneficiary').value;  // Получатель аккредитива
       const amount = web3.utils.toWei(document.getElementById('amount').value, 'ether');  // Сумма в Ether
+      const expiry = document.getElementById('expiryRange').value;
+
 
       // Получаем аккаунты MetaMask
       const accounts = await web3.eth.getAccounts();
