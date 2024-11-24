@@ -169,8 +169,9 @@ input#expiryRange {
 	display: flex;
 	position: absolute;
 	bottom: 0;
-	left: 4.5%;
+	left: 4.9%;
 	width: 0;
+        max-width: 90%;
 	height: 5px;
 	border-radius: 25px;
 	background-color: #4BB543;
@@ -422,12 +423,12 @@ left:-3px;border-radius:5px;
           var width = 0;
           var id = setInterval(frame, 50);
           function frame() {
-              if (width >= 390) {
+              if (width >= 90) {
                 clearInterval(id);
             uploadButton.innerHTML = `<span class="material-icons-outlined upload-button-icon"> check_circle </span> Uploaded`;
               } else {
                 width += 5;
-                progressBar.style.width = width + "px";
+                progressBar.style.width = width + "%";
               }
           }
         }
