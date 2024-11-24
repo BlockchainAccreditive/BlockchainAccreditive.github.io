@@ -22,8 +22,9 @@
 
         /* Стиль для заголовка (кнопки) каждого аккордеона */
         .accordion-header {
-            background-color: #007BFF; /* Цвет фона кнопки */
-            color: white; /* Цвет текста */
+            background-color: #ffffff;
+            color: BLUE;
+            font-weight: 900;
             padding: 10px 15px; /* Отступы внутри кнопки */
             cursor: pointer; /* Курсор в виде руки при наведении */
             font-size: 16px; /* Размер шрифта */
@@ -58,20 +59,8 @@
         }
 
         /* Стиль для заголовка (кнопки) каждого аккордеона */
-        .accordion-header {
-            background-color: #007BFF; /* Цвет фона кнопки */
-            color: white; /* Цвет текста */
-            padding: 10px 15px; /* Отступы внутри кнопки */
-            cursor: pointer; /* Курсор в виде руки при наведении */
-            font-size: 16px; /* Размер шрифта */
-            text-align: left; /* Выравнивание текста по левому краю */
-            transition: background-color 0.3s; /* Плавное изменение цвета фона */
-        }
 
-        /* Эффект при наведении на кнопку аккордеона */
-        .accordion-header:hover {
-            background-color: #0056b3; /* Цвет фона при наведении */
-        }
+
 
         /* Стиль для содержимого аккордеона */
         .accordion-content {
