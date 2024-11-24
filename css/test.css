@@ -78,11 +78,11 @@ input#expiryRange {
 	}
 .drag-file-area {
 	border: 2px dashed #7b2cbf;
-  background-color: #fff;
+        background-color: #fff;
 	border-radius: 40px;
 	margin: 10px 0 15px;
-     /*padding: 30px 50px;*/
-	    width: 90%;
+        color: #7b2cbf;
+	width: 90%;
 	text-align: center;
 }
 .drag-file-area .upload-icon {
