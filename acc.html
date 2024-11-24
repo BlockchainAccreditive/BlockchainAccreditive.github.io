@@ -372,6 +372,13 @@ left:-3px;border-radius:5px;
                 }
             });
         });
+
+const icon = this.querySelector('.material-icons');
+if (item.classList.contains('open')) {
+    icon.textContent = "remove"; // Иконка "-" для открытого элемента
+} else {
+    icon.textContent = "add"; // Иконка "+" для закрытого элемента
+}
     </script>
 
  </body>
