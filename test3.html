@@ -224,8 +224,49 @@ left:-3px;border-radius:5px;
     <h3 style="color: white;">Create</h3>
     <input id="beneficiary" type="text" placeholder="Beneficiary Address (e.g., 0x123...)">
     <input id="amount" type="number" placeholder="Amount (ETH)">
-    <label for="expiryRange" style="color: white;">EXPIRY DATE  (DAYS): <span id="expiryValue">30</span></label>
-    <input id="expiryRange" type="range" min="1" max="365" value="30" oninput="updateExpiryValue()">
+<!-- Обертка для стилизации всей секции -->
+<div style="
+  margin: 20px 0; /* Отступ сверху и снизу */
+  display: flex; /* Используем Flexbox для выравнивания */
+  flex-direction: column; /* Вертикальное расположение элементов */
+  align-items: flex-start; /* Выравнивание элементов по левому краю */
+">
+
+  <!-- Стилизованная подпись (label) -->
+  <label for="expiryRange" style="color: white; /* Белый цвет текста */font-size: 18px; /* Размер шрифта */font-weight: bold; /* Жирное начертание */margin-bottom: 10px; /* Отступ от нижнего края */letter-spacing: 1px; /* Межбуквенный интервал */text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); /* Тень текста */
+  "> EXPIRY DATE (DAYS): <span id="expiryValue" style="color: yellow; /* Жёлтый цвет значения */font-size: 20px; /* Увеличенный размер значения */font-weight: bold; /* Жирное начертание для выделения */text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Лёгкая тень для читаемости */">30</span>
+  </label>
+
+  <!-- Ползунок (range input) с полной стилизацией -->
+  <input id="expiryRange" type="range" min="1" max="365" value="30" oninput="updateExpiryValue()" style="
+    -webkit-appearance: none; /* Убираем стандартный стиль браузера */
+    width: 100%; /* Ширина ползунка */
+    height: 8px; /* Высота дорожки ползунка */
+    background: linear-gradient(90deg, #FFCC70 0%, #C850C0 50%, #4158D0 100%); /* Градиент дорожки */
+    border-radius: 10px; /* Скругление углов дорожки */
+    outline: none; /* Убираем контур при фокусе */
+    cursor: pointer; /* Указатель курсора при наведении */
+    margin-top: 10px; /* Отступ сверху */
+    transition: background 0.3s ease; /* Плавная смена фона */
+    /* Стилизация бегунка */
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none; /* Убираем стандартный стиль */
+      appearance: none; /* Поддержка современных браузеров */
+      width: 20px; /* Ширина бегунка */
+      height: 20px; /* Высота бегунка */
+      background: yellow; /* Цвет бегунка */
+      border-radius: 50%; /* Скругление бегунка (круг) */
+      border: 2px solid blue; /* Синяя обводка */
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.5); /* Лёгкая тень для объёма */
+      cursor: pointer; /* Указатель при наведении */
+      transition: transform 0.2s ease; /* Анимация при наведении */
+    }
+    /* Эффект увеличения бегунка при наведении */
+    &::-webkit-slider-thumb:hover {transform: scale(1.2); /* Увеличение размера */}
+    /* Стилизация активной области ползунка */
+    &::-webkit-slider-runnable-track {background: linear-gradient(90deg, #FFCC70, #C850C0, #4158D0); /* Градиент активной области */}
+  ">
+</div>
     <button onclick="createLetterOfCredit()" style="text-transform: uppercase;">Create Accreditive</button>
 
     <h3 style="color: white;">Approve Accreditive</h3>
