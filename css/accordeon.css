@@ -44,6 +44,49 @@
             transition: max-height 1s ease-out; /* Плавное изменение высоты */
         }
 
+  /* Основной контейнер для аккордеона */
+        .accordion {
+            width: 100%; /* Ширина аккордеона 100% */
+            background-color: transparent; /* Убираем фон */
+            border-radius: 0; /* Без скруглений */
+            overflow: hidden; /* Убирает все, что выходит за пределы контейнера */
+        }
+
+        /* Стиль для каждого элемента аккордеона */
+        .accordion-item {
+            border-bottom: 1px solid #ddd; /* Линия между элементами */
+        }
+
+        /* Стиль для заголовка (кнопки) каждого аккордеона */
+        .accordion-header {
+            background-color: #007BFF; /* Цвет фона кнопки */
+            color: white; /* Цвет текста */
+            padding: 10px 15px; /* Отступы внутри кнопки */
+            cursor: pointer; /* Курсор в виде руки при наведении */
+            font-size: 16px; /* Размер шрифта */
+            text-align: left; /* Выравнивание текста по левому краю */
+            transition: background-color 0.3s; /* Плавное изменение цвета фона */
+        }
+
+        /* Эффект при наведении на кнопку аккордеона */
+        .accordion-header:hover {
+            background-color: #0056b3; /* Цвет фона при наведении */
+        }
+
+        /* Стиль для содержимого аккордеона */
+        .accordion-content {
+            padding: 10px 15px; /* Отступы внутри содержимого */
+            background-color: transparent; /* Убираем фон содержимого */
+            overflow: hidden; /* Прячем содержимое, которое выходит за пределы */
+            max-height: 0; /* Изначально скрыто (высота = 0) */
+            transition: max-height 1s ease-out; /* Плавное изменение максимальной высоты */
+        }
+
+        /* Когда элемент открыт, показываем содержимое */
+        .accordion-item.open .accordion-content {
+            max-height: 1000px; /* Ограничение максимальной высоты для анимации */
+        }
+
         /* Когда элемент открыт, показываем содержимое */
         .accordion-item.open .accordion-content {
             max-height: auto; /* Максимальная высота для раскрытого содержимого (можно настроить) */
