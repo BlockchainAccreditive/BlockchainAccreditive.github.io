@@ -1,0 +1,74 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertical Accordion (Smooth Open All Sections)</title>
+    <link rel="stylesheet" href="css/accordeon.css" />
+</head>
+<body>
+
+    <!-- Контейнер для всего аккордеона -->
+
+
+    <div class="accordion">
+
+        
+        <!-- Первый элемент аккордеона -->
+
+
+        <div class="accordion-item open">
+            <!-- Заголовок первого элемента -->
+            <div class="accordion-header">DOCUMENTS</div>
+            <!-- Содержимое первого элемента -->
+            <div class="accordion-content">
+                <p>This is the content of Section 1.</p>
+            </div>
+        </div>
+
+
+        <!-- Второй элемент аккордеона -->
+
+
+        <div class="accordion-item">
+            <!-- Заголовок второго элемента -->
+            <div class="accordion-header">WALLET</div>
+            <!-- Содержимое второго элемента -->
+            <div class="accordion-content">
+                <p>This is the content of Section 2.</p>
+            </div>
+        </div>
+
+
+            <!-- Третий элемент аккордеона -->
+
+
+        <div class="accordion-item">
+            <!-- Заголовок третьего элемента -->
+            <div class="accordion-header">ACCREDITIVE</div>
+            <!-- Содержимое третьего элемента -->
+            <div class="accordion-content">
+                <p>This is the content of Section 3.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Получаем все заголовки аккордеона
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+        // Добавляем обработчик событий для каждого заголовка
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                // Получаем родительский элемент (сам аккордеон)
+                const item = this.parentElement;
+                
+                // Переключаем класс "open" на текущем элементе
+                item.classList.toggle('open');
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>
