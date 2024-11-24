@@ -1,0 +1,73 @@
+
+        /* Основной контейнер для аккордеона */
+        .accordion {
+            width: 100%; /* Ширина аккордеона 100% */
+            background-color: transparent; /* Убираем фон */
+            border-radius: 0; /* Без скруглений */
+            overflow: hidden; /* Убирает все, что выходит за пределы контейнера */
+        }
+
+
+
+        /* Стиль для заголовка (кнопки) каждого аккордеона */
+        .accordion-header {
+            background-color: #007BFF; /* Цвет фона кнопки */
+            color: white; /* Цвет текста */
+            padding: 10px 15px; /* Отступы внутри кнопки */
+            cursor: pointer; /* Курсор в виде руки при наведении */
+            font-size: 16px; /* Размер шрифта */
+            text-align: left; /* Выравнивание текста по левому краю */
+            display: flex; /* Flex для размещения элементов */
+            justify-content: space-between; /* Располагаем текст слева и иконки справа */
+            align-items: center; /* Выравнивание по вертикали */
+            transition: background-color 0.3s; /* Плавное изменение цвета фона */
+        }
+
+        /* Эффект при наведении на кнопку аккордеона */
+        .accordion-header:hover {
+            background-color: #0056b3; /* Цвет фона при наведении */
+        }
+
+        /* Стиль для содержимого аккордеона */
+        .accordion-content {
+            padding: 10px 15px; /* Отступы внутри содержимого */
+            background-color: transparent; /* Убираем фон содержимого */
+            overflow: hidden; /* Прячем содержимое, которое выходит за пределы */
+            max-height: 0; /* Изначально скрыто (высота = 0) */
+            transition: max-height 1s ease-out; /* Плавное изменение max-height */
+        }
+
+        /* Когда элемент открыт, показываем содержимое */
+        .accordion-item.open .accordion-content {
+            max-height: 1000px; /* Ограничение максимальной высоты */
+        }
+
+        /* Стиль для иконок */
+        .accordion-header .material-icons {
+            opacity: 0; /* Изначально скрыта */
+            transition: opacity 0.3s ease, transform 0.3s ease; /* Плавный переход для opacity и transform */
+        }
+
+        /* Показываем иконку "+" при закрытом состоянии */
+        .accordion-item:not(.open) .material-icons.add-icon {
+            opacity: 1;
+            transform: translateX(0); /* Плавное появление */
+        }
+
+        /* Показываем иконку "-" при открытом состоянии */
+        .accordion-item.open .material-icons.remove-icon {
+            opacity: 1;
+            transform: translateX(0); /* Плавное появление */
+        }
+
+        /* Обертка для текста и иконок */
+        .accordion-header-content {
+            display: flex;
+            justify-content: space-between;
+            width: 100%; /* Чтобы иконки и текст были полностью распределены */
+        }
+
+        /* Обеспечиваем, чтобы иконки всегда располагались справа */
+        .accordion-header .material-icons {
+            margin-left: 10px; /* Отступ между текстом и иконками */
+        }
