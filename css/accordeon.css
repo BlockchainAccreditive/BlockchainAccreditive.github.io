@@ -88,6 +88,6 @@
         }
 
         /* Когда элемент открыт, показываем содержимое */
-        .accordion-item.open .accordion-content {
-            max-height: auto; /* Максимальная высота для раскрытого содержимого (можно настроить) */
-        }
+      /*  .accordion-item.open .accordion-content {
+            max-height: auto; 
+        } */ /* Максимальная высота для раскрытого содержимого (можно настроить) */
