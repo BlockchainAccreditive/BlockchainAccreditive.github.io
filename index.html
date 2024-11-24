@@ -27,24 +27,18 @@
                 </div>
             <!-- Содержимое первого элемента -->
             <div class="accordion-content">
-    <form class="form-container" enctype='multipart/form-data'>
+        <form class="form-container" enctype="multipart/form-data" style="position: relative;">
       <div class="upload-files-container">
         <div class="drag-file-area">
-          <span class="material-icons-outlined upload-icon"> file_upload </span>
-          <h3 class="dynamic-message">DOCUMENTS </h3>
-          <label class="label"> <span class="browse-files"> <input type="file" class="default-file-input"/ multiple> <span class="browse-files-text">BROWSE</span> <span>FROM DEVCIE</span> </span> </label>
+          <span class="material-icons-outlined upload-icon" style="position: relative;top: 25px;color: #7b2cbf;
+">check_circle</span>
+          <h3 class="dynamic-message" style="position: relative;top: 25px;color: #7b2cbf;
+">DOCUMENTS</h3>
+          <label class="label"><span class="browse-files"> <input type="file" class="default-file-input" multiple=""> <span class="browse-files-text">BROWSE FILE</span></span></label>
         </div>
         <span class="cannot-upload-message"> <span class="material-icons-outlined">error</span> Please select a file first <span class="material-icons-outlined cancel-alert-button">cancel</span> </span>
-        <div class="file-block">
-          <div class="file-info" contenteditable="true"> <span class="material-icons-outlined file-icon">description</span> <span class="file-name"> </span>
-            
-            | <span class="file-size">  </span> </div>
-          <span class="material-icons remove-file-icon">delete</span>
-          <div style="position:absolute;margin-top:80px;width:90%;"> 
-            <input type="text" placeholder="comment" style="width: 90%;"> </div>
-          <div class="progress-bar"> </div>
-        </div>
-        <button type="button" class="upload-button"> Upload </button>
+        <br>
+        <button type="button" class="upload-button">Upload</button>
       </div>
     </form>
             </div>
