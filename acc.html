@@ -1,65 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Accordion (Dynamic Height)</title>
-    <style>
-        /* Сброс стилей, чтобы убрать отступы и обводки */
-
-
-        /* Общие стили для всего документа */
-        body, h1 {
-            margin: 0;
-            padding: 0;
-            font-family: monospace;
-        }
-
-        /* Основной контейнер для аккордеона */
-        .accordion {
-            width: 100%; /* Ширина аккордеона 100% */
-            background-color: transparent; /* Убираем фон */
-            border-radius: 0; /* Без скруглений */
-            overflow: hidden; /* Убирает все, что выходит за пределы контейнера */
-        }
-
-        /* Стиль для каждого элемента аккордеона */
-        .accordion-item {
-            border-bottom: 1px solid #ddd; /* Линия между элементами */
-        }
-
-        /* Стиль для заголовка (кнопки) каждого аккордеона */
-        .accordion-header {
-            background-color: #007BFF; /* Цвет фона кнопки */
-            color: white; /* Цвет текста */
-            padding: 10px 15px; /* Отступы внутри кнопки */
-            cursor: pointer; /* Курсор в виде руки при наведении */
-            font-size: 16px; /* Размер шрифта */
-            text-align: left; /* Выравнивание текста по левому краю */
-            transition: background-color 0.3s; /* Плавное изменение цвета фона */
-        }
-
-        /* Эффект при наведении на кнопку аккордеона */
-        .accordion-header:hover {
-            background-color: #0056b3; /* Цвет фона при наведении */
-        }
-
-        /* Стиль для содержимого аккордеона */
-        .accordion-content {
-            padding: 10px 15px; /* Отступы внутри содержимого */
-            background-color: transparent; /* Убираем фон содержимого */
-            overflow: hidden; /* Прячем содержимое, которое выходит за пределы */
-            max-height: 0; /* Изначально скрыто (высота = 0) */
-            transition: max-height 1s ease-out; /* Плавное изменение максимальной высоты */
-        }
-
-        /* Когда элемент открыт, показываем содержимое */
-        .accordion-item.open .accordion-content {
-            max-height: 1000px; /* Ограничение максимальной высоты для анимации */
-        }
-    </style>
+    <title>Vertical Accordion (Smooth Open All Sections)</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">    
+    <link rel="stylesheet" href="css/accordeon.css" />
+    <link rel="stylesheet" href="css/test.css" />
 </head>
-<body>
+<body style="font-family: monospace;">
+
+<!-- Контейнер для всего -->
+
+  <div class="container">
+    <h1 style="color: white;">Blockchain Accreditive</h1>
 
     <!-- Контейнер для всего аккордеона -->
     <div class="accordion">
