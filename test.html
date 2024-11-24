@@ -3,189 +3,168 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Кошелёк</title>
+  <title>Blockchain Accreditive</title>
   <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .container { max-width: 600px; margin: auto; }
-    button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
-    .output { margin-top: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; }
-    .network { margin-bottom: 15px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+      height: 97vh;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+      background: yellow;
+      border: 0;
+      border-radius: 5px;
+      font-weight: 900;
+      color: blue;
+    }
+    input, #expiryRange {
+      padding: 10px;
+      margin: 10px 0;
+      width: 94%;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      color: green;
+      font-weight: 900;
+    }
+    #expiryRange {
+      cursor: pointer;
+    }
+    input:focus, #expiryRange:focus {
+      border: 5px solid yellow;
+    }
+    .output, .wallet-info {
+      margin-top: 20px;
+      padding: 10px;
+      font-weight: 900;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+    }
+    .file-list {
+      margin-top: 10px;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Кошелёк</h1>
-    <!--<button onclick="getWalletInfo()">Показать</button>-->
+    <h1 style="color: white;">Blockchain Accreditive</h1>
 
-<script>window.onload = function() { 
-getWalletInfo()
-  // код для выполнения после загрузки всей страницы
-}</script>
-    <div id="output" class="output"></div>
+    <!-- Wallet Info -->
+    <h2 style="color: white;">Wallet Info</h2>
+    <div id="walletInfo" class="wallet-info"></div>
+
+    <!-- Create Accreditive -->
+    <h2 style="color: white;">Accreditive</h2>
+    <h3 style="color: white;">Create</h3>
+    <input id="beneficiary" type="text" placeholder="Beneficiary Address (e.g., 0x123...)">
+    <input id="amount" type="number" placeholder="Amount (ETH)">
+    <label for="expiryRange" style="color: white;">Expiry (Days): <span id="expiryValue">30</span></label>
+    <input id="expiryRange" type="range" min="1" max="365" value="30" oninput="updateExpiryValue()">
+    <button onclick="createLetterOfCredit()">Create Accreditive</button>
+
+    <!-- Document Upload -->
+    <h3 style="color: white;">Upload Documents</h3>
+    <input id="fileInput" type="file" multiple>
+    <button onclick="uploadDocuments()">Upload</button>
+    <div id="fileList" class="file-list"></div>
+
+    <h3 style="color: white;">Approve Accreditive</h3>
+    <input id="locId" type="text" placeholder="Accreditive ID">
+    <button onclick="approveLetterOfCredit()">Approve Accreditive</button>
+
+    <div id="locOutput" class="output"></div>
   </div>
 
-  <script>
-    let web3;
+<script>
+  let web3;
+  let walletAddress;
+  let contract;
 
-    // Initialize Web3
-    if (window.ethereum) {
-      web3 = new Web3(window.ethereum);
-    } else {
-      document.getElementById('output').innerText = "MetaMask is not detected. Please install MetaMask.";
-      throw new Error("MetaMask not found");
+  const contractABI = [/* ABI Data */];
+  const contractAddress = "0xYourContractAddress";
+
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    ethereum.request({ method: 'eth_requestAccounts' });
+    contract = new web3.eth.Contract(contractABI, contractAddress);
+  } else {
+    alert("MetaMask is not installed.");
+  }
+
+  async function getWalletInfo() {
+    try {
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      walletAddress = accounts[0];
+      const balanceInWei = await web3.eth.getBalance(walletAddress);
+      const balanceInEther = web3.utils.fromWei(balanceInWei, 'ether');
+
+      document.getElementById('walletInfo').innerHTML = `
+        <p>Wallet Address: ${walletAddress}</p>
+        <p>Balance: ${balanceInEther} ETH</p>
+      `;
+    } catch (error) {
+      document.getElementById('walletInfo').innerText = `Error: ${error.message}`;
     }
+  }
 
-    async function getWalletInfo() {
-      try {
-        // Request access to MetaMask
-        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-        const account = accounts[0];
-        const balanceInWei = await web3.eth.getBalance(account);
-        const balanceInEther = web3.utils.fromWei(balanceInWei, 'ether');
-
-        // Add wallet address and balance to output
-        let output = `<h3>Wallet Address</h3><p>${account}</p>`;
-        output += `<h3>Current Network Balance</h3><p>${balanceInEther} ETH</p>`;
-
-        // Get network ID
-        const chainId = await web3.eth.getChainId();
-        const networkName = getNetworkName(chainId);
-        output += `<h3>Current Network</h3><p>${networkName} (Chain ID: ${chainId})</p>`;
-
-        // Fetch balances for common Ethereum networks
-        output += '<h3>Balances on Main Networks</h3>';
-        output += '<div class="network">Loading balances...</div>';
-        document.getElementById('output').innerHTML = output;
-
-        // Load balances on other networks
-        const balances = await getBalancesOnOtherNetworks(account);
-        let networksHTML = '';
-        for (const [network, balance] of Object.entries(balances)) {
-          networksHTML += `<div class="network"><strong>${network}:</strong> ${balance} ETH</div>`;
-        }
-
-        document.querySelector('.output .network').innerHTML = networksHTML;
-      } catch (error) {
-        console.error(error);
-        document.getElementById('output').innerText = `Error: ${error.message}`;
-      }
-    }
-
-    // Map chain IDs to network names
-    function getNetworkName(chainId) {
-      const networks = {
-        1: "Ethereum Mainnet",
-        3: "Ropsten",
-        4: "Rinkeby",
-        5: "Goerli",
-        42: "Kovan",
-        11155111: "Sepolia",
-        1337: "Localhost (Ganache)",
-        56: "Binance Smart Chain",
-        137: "Polygon Mainnet",
-      };
-      return networks[chainId] || "Unknown Network";
-    }
-
-    // Fetch balances from other networks
-    async function getBalancesOnOtherNetworks(account) {
-      const networks = {
-        "Ethereum Mainnet": "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
-        "Goerli Testnet": "https://goerli.infura.io/v3/YOUR_INFURA_PROJECT_ID",
-        "Polygon Mainnet": "https://polygon-rpc.com",
-      };
-
-      const balances = {};
-      for (const [name, rpcUrl] of Object.entries(networks)) {
-        try {
-          const web3Network = new Web3(new Web3.providers.HttpProvider(rpcUrl));
-          const balance = await web3Network.eth.getBalance(account);
-          balances[name] = web3.utils.fromWei(balance, 'ether');
-        } catch (error) {
-          balances[name] = "Error fetching balance";
-        }
-      }
-
-      return balances;
-    }
-  </script>
-
-<div class="container">
-    <h1>Модуль аккредитива</h1>
-    <p>Используйте этот интерфейс для создания и управления аккредитивами на блокчейне.</p>
-
-    <h3>Создать аккредитив</h3>
-    <input id="beneficiary" type="text" placeholder="Получатель">
-    <input id="amount" type="number" placeholder="Сумма (ETH)">
-    <button onclick="createLetterOfCredit()">Создать аккредитив</button>
-
-    <h3>Утвердить Аккредитив</h3>
-    <input id="locId" type="text" placeholder="Идентификатор аккредитива">
-    <button onclick="approveLetterOfCredit()">Идентификатор аккредитива</button>
-
-    <div id="output"></div>
-  </div>
-
-  <script>
-    let contract;
-    const contractABI = [
-      {
-        "inputs": [
-          { "internalType": "address", "name": "_beneficiary", "type": "address" },
-          { "internalType": "uint256", "name": "_amount", "type": "uint256" }
-        ],
-        "name": "createLetterOfCredit",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [{ "internalType": "uint256", "name": "_locId", "type": "uint256" }],
-        "name": "approveLetterOfCredit",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
-    ];
-    const contractAddress = "0xYourContractAddress"; // Replace with deployed contract address
-
-    // Initialize Web3 and connect to MetaMask
-    window.addEventListener('load', async () => {
-      if (window.ethereum) {
-        web3 = new Web3(window.ethereum);
-        await window.ethereum.enable();
-        contract = new web3.eth.Contract(contractABI, contractAddress);
-      } else {
-        document.getElementById('output').innerText = "MetaMask not detected.";
-      }
-    });
-
-    async function createLetterOfCredit() {
-      const accounts = await web3.eth.getAccounts();
+  async function createLetterOfCredit() {
+    try {
       const beneficiary = document.getElementById('beneficiary').value;
       const amount = web3.utils.toWei(document.getElementById('amount').value, 'ether');
+      const expiry = document.getElementById('expiryRange').value;
 
-      try {
-        const locId = await contract.methods.createLetterOfCredit(beneficiary, amount).send({ from: accounts[0] });
-        document.getElementById('output').innerText = `LoC created with ID: ${locId}`;
-      } catch (error) {
-        document.getElementById('output').innerText = `Error: ${error.message}`;
-      }
-    }
-
-    async function approveLetterOfCredit() {
       const accounts = await web3.eth.getAccounts();
-      const locId = document.getElementById('locId').value;
+      const result = await contract.methods.createLetterOfCredit(beneficiary, amount, expiry).send({ from: accounts[0] });
 
-      try {
-        await contract.methods.approveLetterOfCredit(locId).send({ from: accounts[0] });
-        document.getElementById('output').innerText = `LoC ${locId} approved.`;
-      } catch (error) {
-        document.getElementById('output').innerText = `Error: ${error.message}`;
-      }
+      document.getElementById('locOutput').innerText = `LoC Created: ID ${result.events.LoCCreated.returnValues.locId}`;
+    } catch (error) {
+      document.getElementById('locOutput').innerText = `Error: ${error.message}`;
     }
-  </script>
+  }
 
+  async function approveLetterOfCredit() {
+    try {
+      const locId = document.getElementById('locId').value;
+      const accounts = await web3.eth.getAccounts();
+      await contract.methods.approveLetterOfCredit(locId).send({ from: accounts[0] });
+
+      document.getElementById('locOutput').innerText = `LoC Approved: ID ${locId}`;
+    } catch (error) {
+      document.getElementById('locOutput').innerText = `Error: ${error.message}`;
+    }
+  }
+
+  function uploadDocuments() {
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = "";
+
+    Array.from(fileInput.files).forEach(file => {
+      const listItem = document.createElement('div');
+      listItem.textContent = `Uploaded: ${file.name}`;
+      fileList.appendChild(listItem);
+    });
+  }
+
+  function updateExpiryValue() {
+    const expiryValue = document.getElementById('expiryRange').value;
+    document.getElementById('expiryValue').innerText = expiryValue;
+  }
+
+  window.onload = getWalletInfo;
+</script>
 </body>
 </html>
