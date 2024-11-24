@@ -96,6 +96,132 @@ left:-3px;border-radius:5px;
 
 <!-- / Контейнер для всего -->
 
+<script>
+  let web3;                // Переменная для хранения экземпляра Web3
+  let walletAddress;       // Переменная для хранения адреса кошелька MetaMask
+  let contract;            // Переменная для хранения экземпляра контракта
+
+  // Указание ABI контракта и адреса контракта (нужно заменить на реальные данные)
+  const contractABI = [
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_beneficiary", "type": "address" },  // Адрес получателя
+        { "internalType": "uint256", "name": "_amount", "type": "uint256" }         // Сумма аккредитива
+      ],
+      "name": "createLetterOfCredit",  // Функция для создания аккредитива
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "nonpayable",  // Функция не изменяет состояние сети
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "uint256", "name": "_locId", "type": "uint256" }],
+      "name": "approveLetterOfCredit",  // Функция для утверждения аккредитива
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ];
+  const contractAddress = "0xYourContractAddress";  // Адрес развернутого контракта (нужно заменить на настоящий)
+
+  // Инициализация Web3 и MetaMask
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);  // Создаем экземпляр Web3, используя Ethereum провайдер MetaMask
+    ethereum.request({ method: 'eth_requestAccounts' });  // Запрашиваем доступ к аккаунтам MetaMask
+    contract = new web3.eth.Contract(contractABI, contractAddress);  // Инициализируем контракт с ABI и адресом
+  } else {
+    alert("MetaMask is not installed. Please install MetaMask to use this app.");
+    // Если MetaMask не установлен, выводим предупреждение
+  }
+
+  // Функция для получения информации о кошельке MetaMask
+  async function getWalletInfo() {
+    try {
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });  // Получаем доступ к аккаунтам
+      walletAddress = accounts[0];  // Сохраняем первый аккаунт в переменную
+      const balanceInWei = await web3.eth.getBalance(walletAddress);  // Получаем баланс в Wei
+      const balanceInEther = web3.utils.fromWei(balanceInWei, 'ether');  // Преобразуем в Ether
+
+      const chainId = await web3.eth.getChainId();  // Получаем ID текущей сети
+      const networkName = getNetworkName(chainId);  // Определяем имя сети по ее ID
+
+      // Выводим информацию о кошельке на страницу
+      document.getElementById('walletInfo').innerHTML = `
+        <h3 style="color: blue;">Wallet Address</h3>
+        <p style="color:green;" onclick="copyAdress()">${walletAddress}</p>
+        <h3 style="color: blue;">Balance</h3>
+        <p style="color: green;">${balanceInEther} ETH</p>
+        <h3 style="color: blue;">Current Network</h3>
+        <p style="color: green;">${networkName} (Chain ID: ${chainId})</p>
+      `;
+    } catch (error) {
+      // В случае ошибки выводим сообщение
+      document.getElementById('walletInfo').innerText = `Error: ${error.message}`;
+    }
+  }
+
+  // Функция для получения имени сети по ее ID
+  function getNetworkName(chainId) {
+    const networks = {
+      1: "Ethereum Mainnet",  // Основная сеть Ethereum
+      3: "Ropsten",  // Тестовая сеть Ropsten
+      4: "Rinkeby",  // Тестовая сеть Rinkeby
+      5: "Goerli",  // Тестовая сеть Goerli
+      42: "Kovan",  // Тестовая сеть Kovan
+      11155111: "Sepolia",  // Тестовая сеть Sepolia
+      1337: "Localhost (Ganache)"  // Локальная сеть для тестирования
+    };
+    return networks[chainId] || "Unknown Network";  // Возвращаем имя сети по ID или "Unknown Network"
+  }
+
+  // Функция для создания аккредитива
+  async function createLetterOfCredit() {
+    try {
+      // Получаем данные с формы
+      const beneficiary = document.getElementById('beneficiary').value;  // Получатель аккредитива
+      const amount = web3.utils.toWei(document.getElementById('amount').value, 'ether');  // Сумма в Ether
+      const expiry = document.getElementById('expiryRange').value;
+
+
+      // Получаем аккаунты MetaMask
+      const accounts = await web3.eth.getAccounts();
+
+      // Отправляем транзакцию на создание аккредитива
+      const result = await contract.methods.createLetterOfCredit(beneficiary, amount).send({ from: accounts[0] });
+
+      // Извлекаем ID аккредитива из события контракта
+      const locId = result.events.LoCCreated.returnValues.locId;  // Получаем ID из события LoCCreated (нужно настроить контракт для этого)
+
+      // Отображаем результат на странице
+      document.getElementById('locOutput').innerText = `LoC Created: ID ${locId}`;
+    } catch (error) {
+      // В случае ошибки выводим сообщение
+      document.getElementById('locOutput').innerText = `Error: ${error.message}`;
+    }
+  }
+
+  // Функция для утверждения аккредитива
+  async function approveLetterOfCredit() {
+    try {
+      const locId = document.getElementById('locId').value;  // Получаем ID аккредитива
+      const accounts = await web3.eth.getAccounts();  // Получаем аккаунты MetaMask
+
+      // Отправляем транзакцию на утверждение аккредитива
+      await contract.methods.approveLetterOfCredit(locId).send({ from: accounts[0] });
+
+      // Отображаем результат на странице
+      document.getElementById('locOutput').innerText = `LoC Approved: ID ${locId}`;
+    } catch (error) {
+      // В случае ошибки выводим сообщение
+      document.getElementById('locOutput').innerText = `Error: ${error.message}`;
+    }
+  }
+
+  function updateExpiryValue() {
+    const expiryValue = document.getElementById('expiryRange').value;
+    document.getElementById('expiryValue').innerText = expiryValue;
+  }
+</script>
+
     <script>
         // Получаем все заголовки аккордеона
         const accordionHeaders = document.querySelectorAll('.accordion-header');
