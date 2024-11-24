@@ -108,7 +108,7 @@ input#expiryRange {
 }
 .browse-files span {
 	position: relative;
-	top: -25px;
+	top: -35px;
 }
 .default-file-input {
 	opacity: 0;
@@ -406,7 +406,7 @@ left:-3px;border-radius:5px;
     console.log(" > " + fileInput.value)
     uploadIcon.innerHTML = 'check_circle';
     dragDropText.innerHTML = 'File Dropped Successfully!';
-    document.querySelector(".label").innerHTML = `<span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: 0;"> browse file</span></span>`;
+    document.querySelector(".label").innerHTML = `<span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text"> browse file</span></span>`;
     uploadButton.innerHTML = `Upload`;
     fileName.innerHTML = fileInput.files[0].name.split('.')[0].length > 24 ? fileInput.files[0].name.split('.')[0].slice(0, 14) + "..." : fileInput.files[0].name.split('.')[0];
     fileSize.innerHTML = (fileInput.files[0].size/1024).toFixed(1) + " KB";
