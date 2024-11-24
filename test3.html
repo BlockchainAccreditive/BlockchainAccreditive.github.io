@@ -488,7 +488,7 @@ left:-3px;border-radius:5px;
     draggableFileArea.addEventListener("drop", e => {
       uploadIcon.innerHTML = 'check_circle';
       dragDropText.innerHTML = 'Documents dropped Successfully!';
-      document.querySelector(".label").innerHTML = `drag & drop or <span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: -23px; left: -20px;"> browse file</span> </span>`;
+      document.querySelector(".label").innerHTML = `<span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: -23px; left: -20px;"> browse file</span> </span>`;
       uploadButton.innerHTML = `Upload`;
       
       let files = e.dataTransfer.files;
