@@ -204,6 +204,11 @@ left:-3px;border-radius:5px;
       document.getElementById('locOutput').innerText = `Error: ${error.message}`;
     }
   }
+
+  function updateExpiryValue() {
+    const expiryValue = document.getElementById('expiryRange').value;
+    document.getElementById('expiryValue').innerText = expiryValue;
+  }
 </script>
 
 </body>
