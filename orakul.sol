@@ -16,17 +16,20 @@ contract DocumentVerificationOracle is IOracle {
         _;
     }
 
-    // Инициализация владельца контракта
+                            // Инициализация владельца контракта
     constructor() {
         owner = msg.sender; // Устанавливаем владельца контракта
     }
 
-    // Функция для обновления статуса документа (только владелец может обновлять)
+     // Функция для обновления статуса документа (только владелец может обновлять)
     function updateDocumentStatus(bytes32 documentHash, bool isVerified) external onlyOwner {
         documentStatuses[documentHash] = isVerified;
         emit DocumentStatusUpdated(documentHash, isVerified);
     }
-
+    // Вспомогательная функция для проверки, был ли документ в базе данных
+    function isDocumentVerified(bytes32 documentHash) external view returns (bool) {
+        return documentStatuses[documentHash];
+    }
     // Функция для проверки статуса документа
     function getDocumentVerificationStatus(bytes32 documentHash) external view override returns (bool) {
         return documentStatuses[documentHash];
@@ -38,8 +41,5 @@ contract DocumentVerificationOracle is IOracle {
         owner = newOwner;
     }
 
-    // Вспомогательная функция для проверки, был ли документ в базе данных
-    function isDocumentVerified(bytes32 documentHash) external view returns (bool) {
-        return documentStatuses[documentHash];
-    }
+
 }
