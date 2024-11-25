@@ -34,7 +34,6 @@ contract DocumentVerificationOracle is IOracle {
     function getDocumentVerificationStatus(bytes32 documentHash) external view override returns (bool) {
         return documentStatuses[documentHash];
     }
-
     // Функция для изменения владельца контракта
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "New owner is the zero address");
