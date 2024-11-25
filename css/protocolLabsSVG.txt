@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="svg-title--logo-icon" aria-hidden="false" viewBox="0 0 36 36" class="svg-icon svg-icon--logo-icon w-10 h-10 fill-current"><title id="svg-title--logo-icon">Protocol Labs</title> <use xlink:href="#logo-icon" xmlns:xlink="http://www.w3.org/1999/xlink"></use></svg>
