@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Investment</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>Energy Investment Platform</h1>
+
+    <div>
+        <h2>Invest in the Energy Company</h2>
+        <p>Enter the amount of Ether you want to invest:</p>
+        <input type="number" id="investmentAmount" placeholder="Amount in ETH" step="0.01">
+        <button onclick="invest()">Invest</button>
+    </div>
+
+    <div>
+        <h2>Your Investment</h2>
+        <button onclick="getYourShare()">Check Your Share</button>
+        <p id="yourShare">Your share: 0%</p>
+    </div>
+
+    <script>
+        // Подключаемся к MetaMask через Web3
+        if (typeof window.ethereum !== 'undefined') {
+            const web3 = new Web3(window.ethereum);
+            let contract;
+            let account;
+
+            // Адрес контракта и ABI (интерфейс)
+            const contractAddress = '0xYourContractAddressHere';
+            const contractABI = [
+                // Вставьте ABI вашего контракта сюда
+            ];
+
+            async function init() {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                account = (await web3.eth.getAccounts())[0];
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+            }
+
+            // Инвестирование
+            async function invest() {
+                const amount = document.getElementById('investmentAmount').value;
+                if (amount > 0) {
+                    const value = web3.utils.toWei(amount, 'ether');
+                    await contract.methods.invest().send({ from: account, value: value });
+                    alert('Investment successful!');
+                } else {
+                    alert('Please enter a valid amount.');
+                }
+            }
+
+            // Получить долю инвестора
+            async function getYourShare() {
+                const share = await contract.methods.getInvestorShare(account).call();
+                document.getElementById('yourShare').innerText = `Your share: ${share / 100}%`;
+            }
+
+            init();
+        } else {
+            alert('Please install MetaMask to interact with this contract.');
+        }
+    </script>
+</body>
+</html>
