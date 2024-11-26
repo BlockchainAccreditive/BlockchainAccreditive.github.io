@@ -75,6 +75,9 @@ th, td {
     margin-bottom: 0.5rem;
 }
 
+button.removeButton {
+    width: 100%;
+}
 
 table#addressTable {
     width: 100%;
