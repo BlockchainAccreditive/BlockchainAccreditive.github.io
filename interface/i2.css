@@ -54,6 +54,8 @@ input[type="text"] {
 .info {
     margin-top: 1rem;
     font-weight: bold;
+    display: inline-block;
+    padding-bottom: 24px;
 }
 
 table {
