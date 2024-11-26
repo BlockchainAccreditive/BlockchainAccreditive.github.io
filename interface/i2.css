@@ -74,7 +74,9 @@ th, td {
 .saved-item div {
     margin-bottom: 0.5rem;
 }
-.member{color:green;}
+
+.member{color:green;text-align: center;}
+
 button.removeButton {
     width: 100%;
 }
