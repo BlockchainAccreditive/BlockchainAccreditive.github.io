@@ -98,7 +98,7 @@
             try {
                 const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
                 const walletAddress = accounts[0];
-                document.getElementById('walletAddress').innerText = `CONNECTED: ${walletAddress}`;
+                document.getElementById('walletAddress').innerHTML = `CONNECTED: <span class="addr">${walletAddress}</span>`;
                 localStorage.setItem('userWallet', walletAddress);
             } catch (error) {
                 console.error('Error connecting to MetaMask', error);
@@ -109,7 +109,7 @@
         window.addEventListener('load', () => {
             const savedWallet = localStorage.getItem('userWallet');
             if (savedWallet) {
-                document.getElementById('walletAddress').innerText = `CONNECTED : ${savedWallet}`;
+                document.getElementById('walletAddress').innerHTML = `CONNECTED : <span class="addr">${savedWallet}</span>`;
             }
             updateSavedAddressesUI();
         });
