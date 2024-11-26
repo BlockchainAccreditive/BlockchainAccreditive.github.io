@@ -109,7 +109,7 @@
         window.addEventListener('load', () => {
             const savedWallet = localStorage.getItem('userWallet');
             if (savedWallet) {
-                document.getElementById('walletAddress').innerText = `CONNECTED : ${savedWallet}`;
+                document.getElementById('walletAddress').innerText = `CONNECTED : <span class="addr">${savedWallet}</span>`;
             }
             updateSavedAddressesUI();
         });
