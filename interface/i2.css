@@ -57,6 +57,7 @@ input[type="text"] {
     font-weight: bold;
     display: inline-block;
     padding-bottom: 24px;
+    text-transform: uppercase;
 }
 
 table {
