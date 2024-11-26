@@ -86,6 +86,11 @@
     };
 
     // MetaMask connection
+   // Проверка, установлен ли MetaMask
+        if (typeof window.ethereum === 'undefined') {
+            // Если MetaMask не найден, выводим сообщение
+            document.getElementById('walletAddress').innerText = 'CONNECTED: "FALSE"';
+        }
     if (typeof window.ethereum !== 'undefined') {
         const web3 = new Web3(window.ethereum);
 
