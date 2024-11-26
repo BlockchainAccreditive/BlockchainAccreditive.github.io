@@ -76,7 +76,7 @@ th, td {
 }
 
 .member{color:green;text-align: center;}
-
+strong.nick {text-align: center;display: block;}
 button.removeButton {
     width: 100%;
 }
