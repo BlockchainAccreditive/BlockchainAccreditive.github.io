@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Purchasing Pool</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+</head>
+<body>
+<header>
+    <h1>DApp - Joint Purchasing Pool</h1>
+</header>
+
+<div class="container">
+    <button id="connectButton">Connect MetaMask</button>
+    <div id="walletAddress" class="info"></div>
+
+    <h2>Add Nickname to Wallet Address</h2>
+    <div>
+        <input type="text" id="nicknameInput" placeholder="Enter nickname (optional)">
+        <button id="saveAddressButton">Save Address</button>
+    </div>
+
+    <h2>УЧАСТНИКИ</h2>
+    <div id="addressTableWrapper">
+        <table id="addressTable">
+            <thead>
+                <tr>
+                    <th>Nickname & Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="addressTableBody">
+                <tr><td colspan="2">No saved addresses.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <button id="clearAllButton" class="danger">Clear All</button>
+</div>
+
+<script>
+    // Initialize Web3 and saved addresses
+    let savedAddresses = JSON.parse(localStorage.getItem('savedAddresses')) || {};
+
+    const updateSavedAddressesUI = () => {
+        const tableBody = document.getElementById('addressTableBody');
+        tableBody.innerHTML = '';
+
+        if (Object.keys(savedAddresses).length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="2">No saved addresses.</td></tr>';
+            return;
+        }
+
+        for (const [address, nickname] of Object.entries(savedAddresses)) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <div><strong>${nickname || '(No nickname)'}</strong></div>
+                    <div>${address}</div>
+                </td>
+                <td>
+                    <button class="removeButton" data-address="${address}">Remove</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        // Attach event listeners to remove buttons
+        document.querySelectorAll('.removeButton').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const addressToRemove = e.target.getAttribute('data-address');
+                delete savedAddresses[addressToRemove];
+                localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+                updateSavedAddressesUI();
+            });
+        });
+    };
+
+    // MetaMask connection
+    if (typeof window.ethereum !== 'undefined') {
+        const web3 = new Web3(window.ethereum);
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            try {
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                const walletAddress = accounts[0];
+                document.getElementById('walletAddress').innerText = `Connected: ${walletAddress}`;
+                localStorage.setItem('userWallet', walletAddress);
+            } catch (error) {
+                console.error('Error connecting to MetaMask', error);
+            }
+        });
+
+        // Load saved wallet address
+        window.addEventListener('load', () => {
+            const savedWallet = localStorage.getItem('userWallet');
+            if (savedWallet) {
+                document.getElementById('walletAddress').innerText = `Connected: ${savedWallet}`;
+            }
+            updateSavedAddressesUI();
+        });
+    } else {
+        alert('MetaMask is not installed. Please install it to use this DApp.');
+    }
+
+    // Save address with optional nickname
+    document.getElementById('saveAddressButton').addEventListener('click', () => {
+        const walletAddress = localStorage.getItem('userWallet');
+        const nickname = document.getElementById('nicknameInput').value.trim();
+
+        if (!walletAddress) {
+            alert('Connect MetaMask first.');
+            return;
+        }
+
+        savedAddresses[walletAddress] = nickname || '';
+        localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+        updateSavedAddressesUI();
+        document.getElementById('nicknameInput').value = '';
+    });
+
+    // Clear all saved addresses
+    document.getElementById('clearAllButton').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all saved addresses?')) {
+            savedAddresses = {};
+            localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+            updateSavedAddressesUI();
+        }
+    });
+</script>
+</body>
+</html>
