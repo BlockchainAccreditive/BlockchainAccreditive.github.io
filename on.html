@@ -1,1 +1,15 @@
+<script src="https://unpkg.com/@antonz/codapi@0.19.7/dist/snippet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@antonz/codapi@0.19.7/dist/snippet.css" />
+<pre><code>
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://phdc.gov.gh/wp-content/uploads/2024/06/SKILLEDLABOUR.mp4');
+curl_setopt($ch, CURLOPT_HEADER, true);
+curl_setopt($ch, CURLOPT_NOBODY, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+$content = curl_exec ($ch);
+curl_close ($ch);
+</code></pre>
+<codapi-snippet engine="wasi" sandbox="php" editor="basic"></codapi-snippet
+
 workin & ?
