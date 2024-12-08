@@ -40,5 +40,5 @@
       .column:hover .tooltip {
         display: block;
         opacity: 1;
-        bottom: 110%;
+        bottom: -150%;
       }
