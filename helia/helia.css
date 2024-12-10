@@ -24,7 +24,7 @@ ul#connectedPeersList{
     width: 100%;
     max-height: 20vh;
     max-width: 575px;
-    min-width: 585px;
+    min-width: 600px;
     border: 1px solid #ccc;
     /*padding: 10px;*/
     overflow-y: scroll;
