@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPFS Interaction with Infura API Key</title>
+    <script src="https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js"></script>
+</head>
+<body>
+    <h1>IPFS Interaction via Infura API Key</h1>
+
+    <h2>Publish to IPFS</h2>
+    <textarea id="contentToPublish" placeholder="Enter content to publish to IPFS"></textarea>
+    <button onclick="publishToIPFS()">Publish</button>
+    <p id="publishResult"></p>
+
+    <h2>Fetch from IPFS</h2>
+    <input type="text" id="ipfsHash" placeholder="Enter IPFS hash">
+    <button onclick="fetchFromIPFS()">Fetch</button>
+    <p id="fetchResult"></p>
+
+    <script>
+        // Initialize IPFS client with Infura API Key
+        const ipfs = window.IpfsHttpClient.create({
+            url: 'https://mainnet.infura.io/v3/fd99845169234569b3b8948d0acdd36a',
+        });
+
+        // Publish data to IPFS
+        async function publishToIPFS() {
+            const content = document.getElementById('contentToPublish').value;
+            if (!content) {
+                alert('Please enter content to publish.');
+                return;
+            }
+
+            try {
+                const { cid } = await ipfs.add(content);
+                document.getElementById('publishResult').textContent = `Published: ${cid.toString()}`;
+            } catch (error) {
+                console.error(error);
+                alert('Error publishing to IPFS');
+            }
+        }
+
+        // Fetch data from IPFS
+        async function fetchFromIPFS() {
+            const hash = document.getElementById('ipfsHash').value;
+            if (!hash) {
+                alert('Please enter a valid IPFS hash.');
+                return;
+            }
+
+            try {
+                const stream = ipfs.cat(hash);
+                let data = '';
+
+                for await (const chunk of stream) {
+                    data += new TextDecoder().decode(chunk);
+                }
+
+                document.getElementById('fetchResult').textContent = `Fetched: ${data}`;
+            } catch (error) {
+                console.error(error);
+                alert('Error fetching from IPFS');
+            }
+        }
+    </script>
+</body>
+</html>
