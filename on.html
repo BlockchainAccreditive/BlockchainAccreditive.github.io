@@ -18,11 +18,11 @@ curl_close ($ch);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPFS Interaction with CDN</title>
+    <title>IPFS Interaction with Infura API Key</title>
     <script src="https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js"></script>
 </head>
 <body>
-    <h1>IPFS Interaction via CDN</h1>
+    <h1>IPFS Interaction via Infura API Key</h1>
 
     <h2>Publish to IPFS</h2>
     <textarea id="contentToPublish" placeholder="Enter content to publish to IPFS"></textarea>
@@ -35,11 +35,9 @@ curl_close ($ch);
     <p id="fetchResult"></p>
 
     <script>
-        // Initialize IPFS client
+        // Initialize IPFS client with Infura API Key
         const ipfs = window.IpfsHttpClient.create({
-            host: 'ipfs.infura.io', // Public IPFS gateway
-            port: 5001,
-            protocol: 'https',
+            url: 'https://mainnet.infura.io/v3/fd99845169234569b3b8948d0acdd36a',
         });
 
         // Publish data to IPFS
@@ -84,4 +82,3 @@ curl_close ($ch);
     </script>
 </body>
 </html>
-
