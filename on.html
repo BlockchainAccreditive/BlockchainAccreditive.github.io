@@ -12,4 +12,76 @@ curl_close ($ch);
 </code></pre>
 <codapi-snippet engine="wasi" sandbox="php" editor="basic"></codapi-snippet
 
-workin & ?
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPFS Interaction with CDN</title>
+    <script src="https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js"></script>
+</head>
+<body>
+    <h1>IPFS Interaction via CDN</h1>
+
+    <h2>Publish to IPFS</h2>
+    <textarea id="contentToPublish" placeholder="Enter content to publish to IPFS"></textarea>
+    <button onclick="publishToIPFS()">Publish</button>
+    <p id="publishResult"></p>
+
+    <h2>Fetch from IPFS</h2>
+    <input type="text" id="ipfsHash" placeholder="Enter IPFS hash">
+    <button onclick="fetchFromIPFS()">Fetch</button>
+    <p id="fetchResult"></p>
+
+    <script>
+        // Initialize IPFS client
+        const ipfs = window.IpfsHttpClient.create({
+            host: 'ipfs.infura.io', // Public IPFS gateway
+            port: 5001,
+            protocol: 'https',
+        });
+
+        // Publish data to IPFS
+        async function publishToIPFS() {
+            const content = document.getElementById('contentToPublish').value;
+            if (!content) {
+                alert('Please enter content to publish.');
+                return;
+            }
+
+            try {
+                const { cid } = await ipfs.add(content);
+                document.getElementById('publishResult').textContent = `Published: ${cid.toString()}`;
+            } catch (error) {
+                console.error(error);
+                alert('Error publishing to IPFS');
+            }
+        }
+
+        // Fetch data from IPFS
+        async function fetchFromIPFS() {
+            const hash = document.getElementById('ipfsHash').value;
+            if (!hash) {
+                alert('Please enter a valid IPFS hash.');
+                return;
+            }
+
+            try {
+                const stream = ipfs.cat(hash);
+                let data = '';
+
+                for await (const chunk of stream) {
+                    data += new TextDecoder().decode(chunk);
+                }
+
+                document.getElementById('fetchResult').textContent = `Fetched: ${data}`;
+            } catch (error) {
+                console.error(error);
+                alert('Error fetching from IPFS');
+            }
+        }
+    </script>
+</body>
+</html>
+
