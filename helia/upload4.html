@@ -8,22 +8,17 @@
     <link rel="icon" href="https://unpkg.com/@helia/css@1.0.1/logos/favicon.ico" />
     <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css" rel="stylesheet" />
     <link href="helia.css" rel="stylesheet" />
-<style>
-
-</style>
 </head>
-<body style="font-family: monospace;">
-   <!--<h1>IPFS in the Browser via Helia</h1>-->
-   <!-- <p>
+<body>
+    <h1>IPFS in the Browser via Helia</h1>
+    <p>
         This page creates an IPFS Helia node in your browser and sets a few other useful components into the global JavaScript namespace:
         <ul>
             <li><b>helia</b>: The Helia instance. You can access its libp2p instance as <b>helia.libp2p</b>.</li>
             <li><b>heliaFs</b>: An instance of @helia/unixFS.</li>
             <li><b>discoveredPeers</b>: A Map of discovered peers.</li>
         </ul>
-    </p>-->
-    <br>
-    <br>
+    </p>
     <div>
         <button onclick="window.helia.start()">Start Helia</button>
         <button onclick="window.helia.stop()">Stop Helia</button>
@@ -31,31 +26,33 @@
     <h2>Status</h2>
     <p>Node Status: <span id="statusValue">Not Started</span></p>
     <p>Node ID: <span id="nodeId">unknown</span></p>
-    <p>Discovered: <span id="discoveredPeerCount">0</span></p>
-    <p>Connected: <span id="connectedPeerCount">0</span></p>
+    <p>Discovered Peers: <span id="discoveredPeerCount">0</span></p>
+    <p>Connected Peers: <span id="connectedPeerCount">0</span></p>
     <ul id="connectedPeersList"></ul>
     <h2>Log</h2>
     <div id="runningLog"></div>
     <h2>File Operations</h2>
-<p>CODE FILE : bafkreibkriasxom3ewcd2hr4xh5wkyeegb5cjgwj3pkkc4o26ngahmv4iq</p>
-<p>CHARS SAMPLE : bafkreihhzayskjeeavblpxjwqvld5kf4orxhu27j7hqhxkhssdh7wsrhci</p>
-<p>IMAGE FILE : bafkreihx5qtjpg64xpeyzsa6bvyof4ncxmf2spl2o3kuctqphxptcv5bne </p>
     <textarea id="contentToAdd" placeholder="Enter content to store"></textarea>
     <button onclick="addFile()">Add File</button>
     <button onclick="addBytes()">Add Bytes</button>
     <p>Last Added CID: <span id="lastAddedCid">N/A</span></p>
     <input id="cidToRetrieve" placeholder="Enter CID to retrieve">
     <button onclick="catFile()">Retrieve Content</button>
-    <p>Retrieved Content: <pre id="retrievedContent">N/A</pre></p>
+    <p>Retrieved Content: <span id="retrievedContent">N/A</span></p>
     <input id="directoryCid" placeholder="Enter Directory CID">
     <button onclick="listDirectory()">List Directory</button>
     <ul id="directoryList"></ul>
     
-    <!-- New Upload Section -->
-    <h2>Upload File</h2>
-    <input type="file" id="fileToUpload" />
+    <!-- New Upload Section with Preview -->
+    <h2>Upload File with Preview</h2>
+    <input type="file" id="fileToUpload" onchange="previewFile()" />
     <button onclick="uploadFile()">Upload File</button>
     <p>Uploaded CID: <span id="uploadedCid">N/A</span></p>
+
+    <!-- Preview Section -->
+    <div id="filePreview" style="margin-top: 20px;">
+        <!-- Preview will be inserted here dynamically based on file type -->
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js"></script>
@@ -75,11 +72,13 @@
         const logEl = document.getElementById('runningLog');
         const nodeIdEl = document.getElementById('nodeId');
         const uploadedCidEl = document.getElementById('uploadedCid');
+        const retrievedContentEl = document.getElementById('retrievedContent');
+        const filePreviewEl = document.getElementById('filePreview');
 
         let helia, heliaFs;
 
         window.discoveredPeers = new Map();
-        const MAX_LOG_ENTRIES = 10;  // Maximum number of log entries to keep
+        const MAX_LOG_ENTRIES = 100;  // Maximum number of log entries to keep
 
         document.addEventListener('DOMContentLoaded', async () => {
             helia = await instantiateHeliaNode();
@@ -93,12 +92,12 @@
                 if (!window.discoveredPeers.has(peerId)) {
                     window.discoveredPeers.set(peerId, evt.detail);
                     updateDiscoveredPeers();
-                    addToLog(`Discovered: ${peerId}`);
+                    addToLog(`Discovered peer: ${peerId}`);
                 }
             });
 
             helia.libp2p.addEventListener('peer:connect', (evt) => {
-                addToLog(`Connected: ${evt.detail}`);
+                addToLog(`Connected to ${evt.detail}`);
             });
 
             setInterval(updateStatus, 500);
@@ -115,21 +114,15 @@
             updateConnectedPeers();
         }
 
-       function updateConnectedPeers() {
+        function updateConnectedPeers() {
             const peers = helia.libp2p.getPeers();
-            connectedPeerCountEl.textContent = peers.length;
-            connectedPeersListEl.innerHTML = peers.map(peer => `<li>${peer}</li>`).join('');
+            
+            // Ограничиваем вывод до 5 пиров
+            const limitedPeers = peers.slice(0, 5);
+
+            connectedPeerCountEl.textContent = limitedPeers.length;  // Показываем количество подключенных пиров (максимум 5)
+            connectedPeersListEl.innerHTML = limitedPeers.map(peer => `<li>${peer}</li>`).join('');
         }
-
-     /* function updateConnectedPeers() {
-        const peers = helia.libp2p.getPeers();
-        
-        // Ограничиваем вывод до 5 пиров
-        const limitedPeers = peers.slice(0, 5);
-
-        connectedPeerCountEl.textContent = limitedPeers.length;  // Показываем количество подключенных пиров (максимум 5)
-        connectedPeersListEl.innerHTML = limitedPeers.map(peer => `<li>${peer}</li>`).join('');
-    }*/
 
         function updateDiscoveredPeers() {
             discoveredPeerCountEl.textContent = window.discoveredPeers.size;
@@ -145,18 +138,71 @@
             }
         }
 
-                     // Function to handle file upload and store on IPFS
-        async function uploadFile() {
+        // Функция для предварительного просмотра файла
+        function previewFile() {
             const fileInput = document.getElementById('fileToUpload');
-            const file = fileInput.files[0];  // Get the first file from the input
+            const file = fileInput.files[0];
 
             if (!file) {
-                return alert("Please select a file to upload.");
+                filePreviewEl.innerHTML = 'No file selected for preview';
+                return;
             }
 
-            const fileBuffer = await file.arrayBuffer();  // Convert file to ArrayBuffer
-            const cid = await heliaFs.addBytes(new Uint8Array(fileBuffer));  // Add file to IPFS
-            uploadedCidEl.textContent = cid.toString();  // Display the CID of the uploaded file
+            const reader = new FileReader();
+
+            // Очистить любой предыдущий предварительный просмотр
+            filePreviewEl.innerHTML = '';
+
+            // В зависимости от типа файла, показываем предварительный просмотр
+            reader.onload = function(e) {
+                const fileURL = e.target.result;
+
+                if (file.type.startsWith('image/')) {
+                    // Изображения
+                    const img = document.createElement('img');
+                    img.src = fileURL;
+                    img.style.maxWidth = '100%';
+                    img.style.height = 'auto';
+                    filePreviewEl.appendChild(img);
+                } else if (file.type === 'application/pdf') {
+                    // PDF файлы
+                    const iframe = document.createElement('iframe');
+                    iframe.src = fileURL;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '500px'; // Высота для PDF
+                    filePreviewEl.appendChild(iframe);
+                } else if (file.type.startsWith('audio/') || file.type.startsWith('video/')) {
+                    // Аудио или Видео файлы
+                    const media = document.createElement(file.type.startsWith('audio/') ? 'audio' : 'video');
+                    media.controls = true;  // Добавляем элементы управления (play, pause и т.д.)
+                    media.src = fileURL;
+                    media.style.width = '100%';
+                    filePreviewEl.appendChild(media);
+                } else {
+                    // Для остальных типов файлов показываем ссылку для скачивания
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = fileURL;
+                    downloadLink.download = file.name; // Имя файла
+                    downloadLink.textContent = 'Download the file';
+                    filePreviewEl.appendChild(downloadLink);
+                }
+            };
+
+            // Читаем файл как Data URL для отображения
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileToUpload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const cid = await heliaFs.addFile({ content: file });
+            uploadedCidEl.textContent = cid.toString(); // Отображаем CID загруженного файла
             addToLog(`File uploaded: ${cid}`);
         }
 
@@ -197,3 +243,4 @@
     </script>
 </body>
 </html>
+                   
