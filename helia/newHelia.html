@@ -175,6 +175,33 @@
         reader.readAsDataURL(file);
     }
 
+        async function catFile() {
+            const cidInput = document.getElementById("cidToRetrieve");
+            const cid = cidInput.value;
+
+            if (!cid) {
+                alert("Please enter a CID to retrieve content.");
+                return;
+            }
+
+            try {
+                let content = '';
+                const decoder = new TextDecoder();
+
+                for await (const chunk of heliaFs.cat(cid)) {
+                    content += decoder.decode(chunk, { stream: true });
+                }
+
+                content += decoder.decode();
+                retrievedContentEl.textContent = content || 'No content found.';
+                addToLog(`Retrieved content for CID ${cid}`);
+            } catch (error) {
+                console.error("Error retrieving file:", error);
+                alert(`Error retrieving content for CID ${cid}: ${error.message}`);
+                addToLog(`Error retrieving CID ${cid}: ${error.message}`);
+            }
+        }
+
     async function uploadFile() {
         const fileInput = document.getElementById('fileToUpload');
         const file = fileInput.files[0];
