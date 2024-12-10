@@ -1,89 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Helia IPFS Interaction</title>
-    <script src="https://unpkg.com/helia"></script>
-    <script src="https://unpkg.com/@helia/strings"></script>
-    <script src="https://unpkg.com/multiformats"></script>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IPFS in the Browser via Helia</title>
+    <link rel="icon" href="https://unpkg.com/@helia/css@1.0.1/logos/favicon.ico" />
 </head>
 <body>
-    <h1>Helia IPFS Interaction</h1>
+    <h1>IPFS in the Browser via Helia</h1>
 
-    <h2>Publish to IPFS</h2>
-    <textarea id="contentToPublish" placeholder="Enter content to publish to IPFS"></textarea>
-    <button onclick="publishToIPFS()">Publish</button>
-    <p id="publishResult"></p>
+    <div>
+        <button class="e2e-startHelia" onclick="startHelia()">Start Helia</button>
+        <button class="e2e-stopHelia" onclick="stopHelia()">Stop Helia</button>
+    </div>
+    <h2 id="status">Node status: <span id="statusValue">Not Started</span></h2>
 
-    <h2>Fetch from IPFS</h2>
-    <input type="text" id="ipfsHash" placeholder="Enter IPFS CID">
-    <button onclick="fetchFromIPFS()">Fetch</button>
-    <p id="fetchResult"></p>
+    <hr />
+    <h2>Add a File</h2>
+    <textarea id="fileContent" placeholder="Enter content to store in IPFS"></textarea>
+    <button onclick="addFile()">Add File</button>
+    <p>Added File CID: <span id="addedFileCID">N/A</span></p>
 
+    <hr />
+    <h2>Retrieve a File</h2>
+    <input type="text" id="retrieveCID" placeholder="Enter CID to retrieve" />
+    <button onclick="catFile()">Retrieve File</button>
+    <p>Retrieved Content: <span id="retrievedContent">N/A</span></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js"></script>
     <script>
         let helia;
-        let strings;
+        let heliaFs;
 
-        // Initialize Helia
-        async function initializeHelia() {
+        async function startHelia() {
             try {
                 helia = await Helia.create();
-                strings = Strings(helia.blockstore); // Use Helia's string manipulation tools
-                console.log('Helia initialized');
+                heliaFs = UnixFS.createHeliaFs(helia);
+                document.getElementById("statusValue").innerText = "Running";
+                console.log("Helia node started");
             } catch (error) {
-                console.error('Error initializing Helia:', error);
-                alert('Failed to initialize Helia.');
+                console.error("Failed to start Helia:", error);
+                alert("Error starting Helia.");
             }
         }
 
-        // Publish data to IPFS using Helia
-        async function publishToIPFS() {
-            if (!helia) {
-                alert('Helia is not initialized.');
-                return;
+        async function stopHelia() {
+            if (helia) {
+                await helia.stop();
+                document.getElementById("statusValue").innerText = "Stopped";
+                console.log("Helia node stopped");
             }
+        }
 
-            const content = document.getElementById('contentToPublish').value;
+        async function addFile() {
+            const content = document.getElementById("fileContent").value;
             if (!content) {
-                alert('Please enter content to publish.');
+                alert("Please enter content to add.");
                 return;
             }
 
             try {
-                const cid = await strings.putString(content);
-                document.getElementById('publishResult').textContent = `Published: ${cid.toString()}`;
+                const textEncoder = new TextEncoder();
+                const cid = await heliaFs.addFile({
+                    content: textEncoder.encode(content),
+                });
+                document.getElementById("addedFileCID").innerText = cid.toString();
+                console.log("File added with CID:", cid.toString());
             } catch (error) {
-                console.error('Error publishing to IPFS:', error);
-                alert('Failed to publish to IPFS.');
+                console.error("Failed to add file:", error);
+                alert("Error adding file.");
             }
         }
 
-        // Fetch data from IPFS using Helia
-        async function fetchFromIPFS() {
-            if (!helia) {
-                alert('Helia is not initialized.');
-                return;
-            }
-
-            const cid = document.getElementById('ipfsHash').value;
+        async function catFile() {
+            const cid = document.getElementById("retrieveCID").value;
             if (!cid) {
-                alert('Please enter a valid CID.');
+                alert("Please enter a CID.");
                 return;
             }
 
             try {
-                const content = await strings.getString(cid);
-                document.getElementById('fetchResult').textContent = `Fetched: ${content}`;
+                const textDecoder = new TextDecoder();
+                let content = "";
+
+                for await (const chunk of heliaFs.cat(cid)) {
+                    content += textDecoder.decode(chunk);
+                }
+
+                document.getElementById("retrievedContent").innerText = content;
+                console.log("File content retrieved:", content);
             } catch (error) {
-                console.error('Error fetching from IPFS:', error);
-                alert('Failed to fetch from IPFS.');
+                console.error("Failed to retrieve file:", error);
+                alert("Error retrieving file.");
             }
         }
-
-        // Initialize Helia on page load
-        window.onload = initializeHelia;
     </script>
 </body>
 </html>
-
