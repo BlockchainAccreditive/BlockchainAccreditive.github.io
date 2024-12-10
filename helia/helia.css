@@ -13,7 +13,7 @@ ul#connectedPeersList{
 button{
     color: white;
     padding: 10px;
-    border: 0;
+    border: 0;text-transform:uppercase;
     background-color: #00000045;
     border-radius: 8px;}
 #runningLog {    
