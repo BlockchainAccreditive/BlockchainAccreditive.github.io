@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helia with Full UnixFS Features</title>
+</head>
+<body>
+    <h1>Helia with Full UnixFS Features</h1>
+    <p>Node Status: <span id="statusValue">Not Started</span></p>
+    <p>Node ID: <span id="nodeId">N/A</span></p>
+    <p>Discovered Peers: <span id="discoveredPeerCount">0</span></p>
+    <p>Connected Peers: <span id="connectedPeerCount">0</span></p>
+    <ul id="connectedPeersList"></ul>
+
+    <hr />
+    <h2>Add Content</h2>
+    <textarea id="contentToAdd" placeholder="Enter content to store" rows="4" cols="50"></textarea>
+    <button onclick="addFile()">Add File</button>
+    <button onclick="addBytes()">Add Bytes</button>
+    <p>Last Added CID: <span id="lastAddedCid">N/A</span></p>
+
+    <hr />
+    <h2>Retrieve Content</h2>
+    <input id="cidToRetrieve" type="text" placeholder="Enter CID" />
+    <button onclick="catFile()">Retrieve Content</button>
+    <p>Retrieved Content: <span id="retrievedContent">N/A</span></p>
+
+    <hr />
+    <h2>List Directory</h2>
+    <input id="directoryCid" type="text" placeholder="Enter Directory CID" />
+    <button onclick="listDirectory()">List Directory</button>
+    <ul id="directoryList"></ul>
+
+    <hr />
+    <h2>Log</h2>
+    <div id="runningLog"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockstore-core@^4.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datastore-core@^9.0.0/dist/index.min.js"></script>
+    <scrip src="helia2.js" >
+
+    </script>
+</body>
+</html>
