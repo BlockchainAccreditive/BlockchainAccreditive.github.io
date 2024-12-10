@@ -97,7 +97,7 @@
             });
 
             helia.libp2p.addEventListener('peer:connect', (evt) => {
-                addToLog(`Connected: ${evt.detail}`);
+                addToLog(`Connected : ${evt.detail}`);
             });
 
             setInterval(updateStatus, 500);
