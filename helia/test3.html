@@ -101,7 +101,7 @@ ul#connectedPeersList{
                 if (!window.discoveredPeers.has(peerId)) {
                     window.discoveredPeers.set(peerId, evt.detail);  // Add discovered peer to the Map
                     updateDiscoveredPeers();  // Update the discovered peers count
-                    addToLog(`Discovered peer: ${peerId}`);  // Log the discovery event
+                    addToLog(`peer: ${peerId}`);  // Log the discovery event
                 }
             });
 
