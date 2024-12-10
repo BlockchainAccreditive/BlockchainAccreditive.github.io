@@ -110,7 +110,7 @@
         }
 
         function updateStatus() {
-            statusValueEl.textContent = helia.libp2p.status === 'started' ? '<span style="color:green;">Online</span>' : '<span style="color:red;">Offline</span>';
+            statusValueEl.textContent = helia.libp2p.status === 'started' ? 'Online' : 'Offline';
             updateConnectedPeers();
         }
 
