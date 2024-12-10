@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helia with Full UnixFS Features</title>
+</head>
+<body>
+    <h1>Helia with Full UnixFS Features</h1>
+    <p>Node Status: <span id="statusValue">Not Started</span></p>
+    <p>Node ID: <span id="nodeId">N/A</span></p>
+    <p>Discovered Peers: <span id="discoveredPeerCount">0</span></p>
+    <p>Connected Peers: <span id="connectedPeerCount">0</span></p>
+    <ul id="connectedPeersList"></ul>
+
+    <hr />
+    <h2>Add Content</h2>
+    <textarea id="contentToAdd" placeholder="Enter content to store" rows="4" cols="50"></textarea>
+    <button onclick="addFile()">Add File</button>
+    <button onclick="addBytes()">Add Bytes</button>
+    <p>Last Added CID: <span id="lastAddedCid">N/A</span></p>
+
+    <hr />
+    <h2>Retrieve Content</h2>
+    <input id="cidToRetrieve" type="text" placeholder="Enter CID" />
+    <button onclick="catFile()">Retrieve Content</button>
+    <p>Retrieved Content: <span id="retrievedContent">N/A</span></p>
+
+    <hr />
+    <h2>List Directory</h2>
+    <input id="directoryCid" type="text" placeholder="Enter Directory CID" />
+    <button onclick="listDirectory()">List Directory</button>
+    <ul id="directoryList"></ul>
+
+    <hr />
+    <h2>Log</h2>
+    <div id="runningLog"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockstore-core@^4.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datastore-core@^9.0.0/dist/index.min.js"></script>
+    <script>
+        let helia, heliaFs;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            helia = await instantiateHeliaNode();
+            heliaFs = await HeliaUnixfs.unixfs(helia);
+
+            const id = await helia.libp2p.peerId.toString();
+            document.getElementById("nodeId").innerText = id;
+
+            setInterval(() => {
+                document.getElementById("statusValue").innerText =
+                    helia.libp2p.status === "started" ? "Online" : "Offline";
+                updateConnectedPeers();
+            }, 500);
+        });
+
+        async function addFile() {
+            const content = document.getElementById("contentToAdd").value;
+            if (!content) return alert("Please enter content.");
+            try {
+                const cid = await heliaFs.addFile({
+                    content: new TextEncoder().encode(content),
+                });
+                document.getElementById("lastAddedCid").innerText = cid.toString();
+                addToLog(`File added with CID: ${cid}`);
+            } catch (error) {
+                console.error("Error adding file:", error);
+            }
+        }
+
+        async function addBytes() {
+            const content = document.getElementById("contentToAdd").value;
+            if (!content) return alert("Please enter content.");
+            try {
+                const cid = await heliaFs.addBytes(
+                    new TextEncoder().encode(content)
+                );
+                document.getElementById("lastAddedCid").innerText = cid.toString();
+                addToLog(`Bytes added with CID: ${cid}`);
+            } catch (error) {
+                console.error("Error adding bytes:", error);
+            }
+        }
+
+        async function catFile() {
+            const cid = document.getElementById("cidToRetrieve").value;
+            if (!cid) return alert("Please enter a CID.");
+            try {
+                let content = "";
+                for await (const chunk of heliaFs.cat(cid)) {
+                    content += new TextDecoder().decode(chunk);
+                }
+                document.getElementById("retrievedContent").innerText = content;
+                addToLog(`Content retrieved for CID: ${cid}`);
+            } catch (error) {
+                console.error("Error retrieving content:", error);
+            }
+        }
+
+        async function listDirectory() {
+            const cid = document.getElementById("directoryCid").value;
+            if (!cid) return alert("Please enter a directory CID.");
+            const dirList = document.getElementById("directoryList");
+            dirList.innerHTML = "";
+            try {
+                for await (const entry of heliaFs.ls(cid)) {
+                    const li = document.createElement("li");
+                    li.innerText = `${entry.name} (CID: ${entry.cid})`;
+                    dirList.appendChild(li);
+                }
+                addToLog(`Directory listed for CID: ${cid}`);
+            } catch (error) {
+                console.error("Error listing directory:", error);
+            }
+        }
+
+        const instantiateHeliaNode = async () => {
+            const datastore = new DatastoreCore.MemoryDatastore();
+            const blockstore = new BlockstoreCore.MemoryBlockstore();
+            const heliaInstance = await Helia.createHelia({
+                datastore,
+                blockstore,
+            });
+            addToLog("Helia instance created.");
+            return heliaInstance;
+        };
+
+        function updateConnectedPeers() {
+            const peers = helia.libp2p.getPeers();
+            document.getElementById("connectedPeerCount").innerText = peers.length;
+            const peerList = document.getElementById("connectedPeersList");
+            peerList.innerHTML = "";
+            peers.forEach((peer) => {
+                const li = document.createElement("li");
+                li.innerText = peer.toString();
+                peerList.appendChild(li);
+            });
+        }
+
+        function addToLog(message) {
+            const logEl = document.getElementById("runningLog");
+            const entry = document.createElement("div");
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logEl.appendChild(entry);
+        }
+    </script>
+</body>
+</html>
