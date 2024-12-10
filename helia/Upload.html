@@ -143,11 +143,21 @@ ul#connectedPeersList{
             updateConnectedPeers();
         }
 
-        function updateConnectedPeers() {
+     /*   function updateConnectedPeers() {
             const peers = helia.libp2p.getPeers();
             connectedPeerCountEl.textContent = peers.length;
             connectedPeersListEl.innerHTML = peers.map(peer => `<li>${peer}</li>`).join('');
-        }
+        }*/
+
+    function updateConnectedPeers() {
+        const peers = helia.libp2p.getPeers();
+        
+        // Ограничиваем вывод до 5 пиров
+        const limitedPeers = peers.slice(0, 5);
+
+        connectedPeerCountEl.textContent = limitedPeers.length;  // Показываем количество подключенных пиров (максимум 5)
+        connectedPeersListEl.innerHTML = limitedPeers.map(peer => `<li>${peer}</li>`).join('');
+    }
 
         function updateDiscoveredPeers() {
             discoveredPeerCountEl.textContent = window.discoveredPeers.size;
