@@ -127,7 +127,26 @@
             addToLog("Helia instance created.");
             return heliaInstance;
         };
-
+// -------------------------------------------------
+// -------------------------------------------------
+// -------------------------------------------------
+// Обработчик события peer:discovery
+helia.libp2p.addEventListener('peer:discovery', (evt) => {
+    const peerId = evt.detail.id.toString();
+    if (!window.discoveredPeers.has(peerId)) {
+        window.discoveredPeers.set(peerId, evt.detail);
+        updateDiscoveredPeers(); // Обновляем отображение после добавления нового пира
+        addToLog(`Discovered peer ${peerId}`);
+    }
+});
+// Функция для обновления количества обнаруженных пиров
+const updateDiscoveredPeers = () => {
+    const discoveredPeerCount = window.discoveredPeers.size;
+    document.getElementById('discoveredPeerCount').innerText = discoveredPeerCount;
+};
+// -------------------------------------------------
+// -------------------------------------------------
+// -------------------------------------------------
         function updateConnectedPeers() {
             const peers = helia.libp2p.getPeers();
             document.getElementById("connectedPeerCount").innerText = peers.length;
