@@ -57,7 +57,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@libp2p/bootstrap@^10.0.0/dist/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/blockstore-core@^4.0.0/dist/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datastore-core@^9.0.0/dist/index.min.js"></script>
-    <script>
+<script>
         /* Global variables */
         const statusValueEl = document.getElementById('statusValue');
         const discoveredPeerCountEl = document.getElementById('discoveredPeerCount');
@@ -165,90 +165,79 @@
                     iframe.style.width = '100%';
                     iframe.style.height = '500px';
                     filePreviewEl.appendChild(iframe);
-                } else if (file.type.startsWith('text/') || file.type === 'application/json') {
-            reader.readAsText(file);
-        } else {
+                } else if (file.type.startsWith('audio/')) {
+                    // Аудиофайлы
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = fileURL;
+                    filePreviewEl.appendChild(audio);
+                } else if (file.type.startsWith('video/')) {
+                    // Видеофайлы
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.style.maxWidth = '500px';
+                    video.src = fileURL;
+                    filePreviewEl.appendChild(video);
+                } else {
+                    // Текстовые или неизвестные форматы
+                    const pre = document.createElement('pre');
+                    pre.textContent = e.target.result;
+                    filePreviewEl.appendChild(pre);
+                }
+            };
+
             reader.readAsDataURL(file);
         }
-    }
 
-    // Загрузка файла в IPFS
-    async function uploadFile() {
-        const fileInput = document.getElementById('fileToUpload');
-        const file = fileInput.files[0];
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileToUpload');
+            const file = fileInput.files[0];
 
-        if (!file) {
-            addToLog('No file selected for upload');
-            return;
-        }
-
-        addToLog(`Uploading file: ${file.name}`);
-        const fileReader = new FileReader();
-
-        fileReader.onload = async function(e) {
-            const fileContent = new Uint8Array(e.target.result);
-            const { cid } = await heliaFs.addFile({
-                path: file.name,
-                content: fileContent
-            });
-
-            uploadedCidEl.textContent = cid.toString();
-            addToLog(`File uploaded: CID = ${cid}`);
-        };
-
-        fileReader.readAsArrayBuffer(file);
-    }
-
-    // Получение содержимого по CID
-    async function catFile() {
-        const cidToRetrieve = document.getElementById('cidToRetrieve').value;
-
-        if (!cidToRetrieve) {
-            addToLog('No CID provided for retrieval');
-            return;
-        }
-
-        addToLog(`Retrieving file with CID: ${cidToRetrieve}`);
-        try {
-            const chunks = [];
-            for await (const chunk of heliaFs.cat(cidToRetrieve)) {
-                chunks.push(chunk);
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
             }
 
-            const fileContent = new Uint8Array(chunks.flat());
-            const fileBlob = new Blob([fileContent]);
-            const fileURL = URL.createObjectURL(fileBlob);
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const fileContent = new Uint8Array(reader.result);
 
-            // Определяем тип содержимого
-            const contentType = fileBlob.type || 'application/octet-stream';
+                // Upload file to IPFS
+                const cid = await heliaFs.addBytes(fileContent);
 
-            if (contentType.startsWith('image/')) {
-                const img = document.createElement('img');
-                img.src = fileURL;
-                img.style.maxWidth = '500px';
-                retrievedContentEl.innerHTML = '';
-                retrievedContentEl.appendChild(img);
-            } else if (contentType === 'application/pdf') {
-                const iframe = document.createElement('iframe');
-                iframe.src = fileURL;
-                iframe.style.width = '100%';
-                iframe.style.height = '500px';
-                retrievedContentEl.innerHTML = '';
-                retrievedContentEl.appendChild(iframe);
-            } else if (contentType.startsWith('text/') || contentType === 'application/json') {
-                const text = await fileBlob.text();
-                const pre = document.createElement('pre');
-                pre.textContent = text;
-                retrievedContentEl.innerHTML = '';
-                retrievedContentEl.appendChild(pre);
-            } else {
-                retrievedContentEl.innerHTML = `<a href="${fileURL}" download>Download File</a>`;
+                uploadedCidEl.textContent = cid.toString();
+                addToLog(`File uploaded: CID=${cid}`);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function catFile() {
+            const cidInput = document.getElementById("cidToRetrieve");
+            const cid = cidInput.value;
+
+            if (!cid) {
+                alert("Please enter a CID to retrieve content.");
+                return;
             }
 
-            addToLog(`File retrieved: CID = ${cidToRetrieve}`);
-        } catch (error) {
-            addToLog(`Error retrieving file: ${error.message}`);
-            retrievedContentEl.textContent = 'Error retrieving content.';
+            try {
+                let content = '';
+                const decoder = new TextDecoder();
+
+                for await (const chunk of heliaFs.cat(cid)) {
+                    content += decoder.decode(chunk, { stream: true });
+                }
+
+                content += decoder.decode();
+                retrievedContentEl.textContent = content || 'No content found.';
+                addToLog(`Retrieved content for CID ${cid}`);
+            } catch (error) {
+                console.error("Error retrieving file:", error);
+                alert(`Error retrieving content for CID ${cid}: ${error.message}`);
+                addToLog(`Error retrieving CID ${cid}: ${error.message}`);
+            }
         }
-    }
 </script>
+</body>
+</html>
