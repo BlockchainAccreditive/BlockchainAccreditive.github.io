@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IPFS in the Browser via Helia</title>
+    <link rel="icon" href="https://unpkg.com/@helia/css@1.0.1/logos/favicon.ico" />
+    <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css" rel="stylesheet" />
+</head>
+<body>
+    <h1>IPFS in the Browser via Helia</h1>
+    <p>
+        This page creates an IPFS Helia node in your browser and sets a few other useful components into the global JavaScript namespace:
+        <ul>
+            <li><b>helia</b>: The Helia instance. You can access its libp2p instance as <b>helia.libp2p</b>.</li>
+            <li><b>heliaFs</b>: An instance of @helia/unixFS.</li>
+            <li><b>discoveredPeers</b>: A Map of discovered peers.</li>
+        </ul>
+    </p>
+    <div>
+        <button onclick="window.helia.start()">Start Helia</button>
+        <button onclick="window.helia.stop()">Stop Helia</button>
+    </div>
+    <h2>Status</h2>
+    <p>Node Status: <span id="statusValue">Not Started</span></p>
+    <p>Node ID: <span id="nodeId">unknown</span></p>
+    <p>Discovered Peers: <span id="discoveredPeerCount">0</span></p>
+    <p>Connected Peers: <span id="connectedPeerCount">0</span></p>
+    <ul id="connectedPeersList"></ul>
+    <h2>Log</h2>
+    <div id="runningLog"></div>
+    <h2>File Operations</h2>
+    <textarea id="contentToAdd" placeholder="Enter content to store"></textarea>
+    <button onclick="addFile()">Add File</button>
+    <button onclick="addBytes()">Add Bytes</button>
+    <p>Last Added CID: <span id="lastAddedCid">N/A</span></p>
+    <input id="cidToRetrieve" placeholder="Enter CID to retrieve">
+    <button onclick="catFile()">Retrieve Content</button>
+    <p>Retrieved Content: <span id="retrievedContent">N/A</span></p>
+    <input id="directoryCid" placeholder="Enter Directory CID">
+    <button onclick="listDirectory()">List Directory</button>
+    <ul id="directoryList"></ul>
+    
+    <!-- New Upload Section -->
+    <h2>Upload File</h2>
+    <input type="file" id="fileToUpload" />
+    <button onclick="uploadFile()">Upload File</button>
+    <p>Uploaded CID: <span id="uploadedCid">N/A</span></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/libp2p@^1.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-yamux@^6.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-noise@^15.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@libp2p/websockets@^8.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@libp2p/bootstrap@^10.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockstore-core@^4.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datastore-core@^9.0.0/dist/index.min.js"></script>
+    <script>
+        /* Global variables */
+        const statusValueEl = document.getElementById('statusValue');
+        const discoveredPeerCountEl = document.getElementById('discoveredPeerCount');
+        const connectedPeerCountEl = document.getElementById('connectedPeerCount');
+        const connectedPeersListEl = document.getElementById('connectedPeersList');
+        const logEl = document.getElementById('runningLog');
+        const nodeIdEl = document.getElementById('nodeId');
+        const uploadedCidEl = document.getElementById('uploadedCid');
+        const retrievedContentEl = document.getElementById('retrievedContent');
+
+        let helia, heliaFs;
+
+        window.discoveredPeers = new Map();
+        const MAX_LOG_ENTRIES = 100;  // Maximum number of log entries to keep
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            helia = await instantiateHeliaNode();
+            heliaFs = await HeliaUnixfs.unixfs(helia);
+
+            const id = await helia.libp2p.peerId.toString();
+            nodeIdEl.textContent = id;
+
+            helia.libp2p.addEventListener('peer:discovery', (evt) => {
+                const peerId = evt.detail.id.toString();
+                if (!window.discoveredPeers.has(peerId)) {
+                    window.discoveredPeers.set(peerId, evt.detail);
+                    updateDiscoveredPeers();
+                    addToLog(`Discovered peer: ${peerId}`);
+                }
+            });
+
+            helia.libp2p.addEventListener('peer:connect', (evt) => {
+                addToLog(`Connected to ${evt.detail}`);
+            });
+
+            setInterval(updateStatus, 500);
+        });
+
+        async function instantiateHeliaNode() {
+            const datastore = new DatastoreCore.MemoryDatastore();
+            const blockstore = new BlockstoreCore.MemoryBlockstore();
+            return await Helia.createHelia({ datastore, blockstore });
+        }
+
+        function updateStatus() {
+            statusValueEl.textContent = helia.libp2p.status === 'started' ? 'Online' : 'Offline';
+            updateConnectedPeers();
+        }
+
+        function updateConnectedPeers() {
+            const peers = helia.libp2p.getPeers();
+            connectedPeerCountEl.textContent = peers.length;
+            connectedPeersListEl.innerHTML = peers.map(peer => `<li>${peer}</li>`).join('');
+        }
+
+        function updateDiscoveredPeers() {
+            discoveredPeerCountEl.textContent = window.discoveredPeers.size;
+        }
+
+        function addToLog(message) {
+            const entry = document.createElement('div');
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logEl.appendChild(entry);
+
+            if (logEl.children.length > MAX_LOG_ENTRIES) {
+                logEl.removeChild(logEl.firstChild);
+            }
+        }
+
+        // Function to handle file upload and store on IPFS
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileToUpload');
+            const file = fileInput.files[0];  // Get the first file from the input
+
+            if (!file) {
+                return alert("Please select a file to upload.");
+            }
+
+            const fileBuffer = await file.arrayBuffer();  // Convert file to ArrayBuffer
+            const cid = await heliaFs.addBytes(new Uint8Array(fileBuffer));  // Add file to IPFS
+            uploadedCidEl.textContent = cid.toString();  // Display the CID of the uploaded file
+            addToLog(`File uploaded: ${cid}`);
+        }
+
+        // Function to retrieve content and handle different types (image, pdf, text, etc.)
+        async function catFile() {
+            const cid = document.getElementById("cidToRetrieve").value;
+            const fileData = [];
+            for await (const chunk of heliaFs.cat(cid)) {
+                fileData.push(chunk);
+            }
+
+            const fileBuffer = new Uint8Array(fileData.flat());
+            const fileBlob = new Blob([fileBuffer], { type: getFileType(fileBuffer) });
+            const fileURL = URL.createObjectURL(fileBlob);
+
+            // Очистить старое содержимое перед добавлением нового
+            retrievedContentEl.innerHTML = '';
+
+            // Определить MIME тип и соответствующим образом отобразить файл
+            if (fileBlob.type.startsWith('image/')) {
+                // Если это изображение
+                const img = document.createElement('img');
+                img.src = fileURL;
+                img.style.maxWidth = '100%'; // Ограничить ширину изображения
+                img.style.height = 'auto';
+                retrievedContentEl.appendChild(img);
+            } else if (fileBlob.type === 'application/pdf') {
+                // Если это PDF
+                const iframe = document.createElement('iframe');
+                iframe.src = fileURL;
+                iframe.style.width = '100%';
+                iframe.style.height = '500px'; // Высота для PDF
+                retrievedContentEl.appendChild(iframe);
+            } else if (fileBlob.type.startsWith('audio/') || fileBlob.type.startsWith('video/')) {
+                // Если это аудио или видео
+                const media = document.createElement(fileBlob.type.startsWith('audio/') ? 'audio' : 'video');
+                media.controls = true;  // Добавить элементы управления (play, pause и т.д.)
+                media.src = fileURL;
+                media.style.width = '100%';
+                retrievedContentEl.appendChild(media);
+            } else {
+                // Для других типов файлов создаём ссылку для скачивания
+                const downloadLink = document.createElement('a');
+                downloadLink.href = fileURL;
+                downloadLink.download = cid; // Имя файла будет CID
+                downloadLink.textContent = 'Download the file';
+                retrievedContentEl.appendChild(downloadLink);
+            }
+
+            addToLog(`Content retrieved from CID: ${cid}`);
+        }
+
+        // Функция для получения типа файла (MIME тип)
+        function getFileType(buffer) {
+            const signature = buffer.slice(0, 4).toString();
+            if (signature === 'ÿØÿà') {
+                return 'image/jpeg';  // Для JPEG изображений
+            }
+            if (signature === '‰PNG') {
+                return 'image/png';  // Для PNG изображений
+            }
+            if (signature.startsWith('ID3')) {
+                return 'audio/mp3';  // Для MP3 аудио файлов
+            }
+            // Определение других типов, если необходимо
+            return 'application/octet-stream'; // Для всех остальных типов
+        }
+
+        async function listDirectory() {
+            const cid = document.getElementById("directoryCid").value;
+            if (!cid) return alert("Enter a CID to list the directory.");
+            
+            const entries = [];
+            for await (const entry of heliaFs.ls(cid)) {
+                entries.push(entry);
+            }
+
+            const directoryListEl = document.getElementById("directoryList");
+            directoryListEl.innerHTML = entries.map(entry => 
+                `<li>${entry.cid.toString()} - ${entry.name}</li>`
+            ).join('');
+        }
+    </script>
+</body>
+</html>
