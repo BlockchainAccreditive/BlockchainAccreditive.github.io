@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,28 +5,24 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>IPFS in the Browser via Helia</title>
+    <title>IPFS and Metamask Integration</title>
     <link rel="icon favicon" href="https://unpkg.com/@helia/css@1.0.1/logos/favicon.ico" />
     <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css" rel="stylesheet" />
   </head>
   <body>
-    <h1>IPFS in the Browser via Helia</h1>
+    <h1>IPFS and Metamask Integration</h1>
     <p>
-      This page creates an IPFS Helia node in your browser and sets a few other useful components into the
-      global Javascript namespace:
-      <ul>
-        <li><b><em style="background-color:#d7d6d6">helia</em></b> - A helia instance. You can access the <a href="https://www.npmjs.com/package/libp2p" target="_blank">libp2p</a> instance used by helia with <b><em style="background-color:#d7d6d6">helia.libp2p</em></b></li>
-        <li><b><em style="background-color:#d7d6d6">heliaFs</em></b> - A <a href="https://www.npmjs.com/package/@helia/unixfs" target="_blank">@helia/unixFS</a> instance</li>
-        <li><b><em style="background-color:#d7d6d6">discoveredPeers</em></b> - A <b><em style="background-color:#d7d6d6">Map&lt;peerIdString, peerDiscoveryEventDetail&gt;</em></b> that is filled as we discover peers</li>
-      </ul>
-      Open the console to play around with them.
+      This page creates an IPFS Helia node in your browser and also integrates with Metamask for wallet connection.
     </p>
-    <p>
-      Note that opening two tabs of this page in the same browser won't work
-      well, because they will share node configuration. You'll end up trying to
-      run two instances of the same node, with the same private key and
-      identity, which is a Bad Idea.
-    </p>
+
+    <div>
+      <button onclick="connectMetamask()">Connect Metamask</button>
+    </div>
+    <h3>Metamask Status:</h3>
+    <p>Network: <span id="network">Not Connected</span></p>
+    <p>Addresses and Balances:</p>
+    <ul id="wallets"></ul>
+
     <hr />
     <div>
       <button class="e2e-startHelia" onclick="window.helia.start()">Start Helia</button>
@@ -41,170 +36,106 @@
       <ul id="connectedPeersList"></ul>
     </div>
 
-    <hr />
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-core.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/plugins/autoloader/prism-autoloader.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/libp2p@^1.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-yamux@^6.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-noise@^15.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@libp2p/websockets@^8.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@libp2p/bootstrap@^10.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockstore-core@^4.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/datastore-core@^9.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@libp2p/kad-dht@^12.0.0/dist/index.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 
-    <h2>Some suggestions</h2>
+    <script>
+      // Connect to Metamask
+      async function connectMetamask() {
+        if (typeof window.ethereum === "undefined") {
+          alert("Metamask is not installed!");
+          return;
+        }
 
-    <h2>Add a File</h2>
-    <textarea id="fileContent" placeholder="Enter content to store in IPFS"></textarea>
-    <button onclick="addFile()">Add File</button>
-    <p>Added File CID: <span id="addedFileCID">N/A</span></p>
+        try {
+          const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+          const networkId = await ethereum.request({ method: "net_version" });
+          const networkName = getNetworkName(networkId);
 
-    <hr />
-    <h2>Retrieve a File</h2>
-    <input type="text" id="retrieveCID" placeholder="Enter CID to retrieve" />
-    <button onclick="catFile()">Retrieve File</button>
-    <p>Retrieved Content: <span id="retrievedContent">N/A</span></p>
+          document.getElementById("network").innerText = networkName;
 
+          const walletsList = document.getElementById("wallets");
+          walletsList.innerHTML = ""; // Clear previous entries
 
+          for (const account of accounts) {
+            const balance = await ethereum.request({
+              method: "eth_getBalance",
+              params: [account, "latest"],
+            });
 
+            const balanceInEth = parseFloat(window.web3.utils.fromWei(balance, "ether")).toFixed(4);
 
-
-
-
-
-
-
-    <p>Try adding a new file:</p>
-
-    <pre><code class="language-javascript">
-      async function addFile () {
-        const textEncoder = new TextEncoder()
-        const cid = await heliaFs.addFile({content: textEncoder.encode('Hello world!')})
-        console.log('successfully stored', cid.toString())
-      }
-      await addFile()
-    </code></pre>
-
-    <p>
-      You can cat that same file. If you used the exact same string as above
-      ('Hello world!') you should have an hash like this:
-      'bafkreigaknpexyvxt76zgkitavbwx6ejgfheup5oybpm77f3pxzrvwpfdi'
-    </p>
-
-    <pre><code class="language-javascript">
-      async function catFile () {
-        const textDecoder = new TextDecoder()
-        for await (const data of heliaFs.cat('bafkreigaknpexyvxt76zgkitavbwx6ejgfheup5oybpm77f3pxzrvwpfdi')) {
-          console.log(textDecoder.decode(data))
+            const li = document.createElement("li");
+            li.innerText = `Address: ${account}, Balance: ${balanceInEth} ETH`;
+            walletsList.appendChild(li);
+          }
+        } catch (error) {
+          console.error("Error connecting to Metamask:", error);
         }
       }
-      await catFile()
-    </code></pre>
 
-    <p>
-      Display the multiaddrs of the peers you've discovered:
-    </p>
-    <pre><code class="language-javascript">
-      for (const [peerIdString, peer] of discoveredPeers.entries()) {
-        console.log(`${peerIdString}: ${peer.multiaddrs.toString()}`)
+      // Convert network ID to network name
+      function getNetworkName(networkId) {
+        const networkNames = {
+          1: "Mainnet",
+          3: "Ropsten",
+          4: "Rinkeby",
+          5: "Goerli",
+          42: "Kovan",
+        };
+        return networkNames[networkId] || `Unknown (ID: ${networkId})`;
       }
-    </code></pre>
 
-    <p>
-      Provide the CIDs you create (once you're connected to a peer)
-    </p>
-    <pre><code class="language-javascript">
-      const textEncoder = new TextEncoder()
-      const cid = await heliaFs.addFile({content: textEncoder.encode('Hello world!')})
-      for await (const event of helia.libp2p.dht.provide(cid)) {
-        console.log(event)
-      }
-    </code></pre>
+      // IPFS-related code
+      const statusValueEl = document.getElementById('statusValue');
+      const discoveredPeerCountEl = document.getElementById('discoveredPeerCount');
+      const connectedPeerCountEl = document.getElementById('connectedPeerCount');
+      const connectedPeersListEl = document.getElementById('connectedPeersList');
+      const logEl = document.getElementById('runningLog');
+      const nodeIdEl = document.getElementById('nodeId');
 
-    <hr />
-    <h2>Event Log:</h2>
-    <article id="runningLog"></article>
-  </body>
-  <style>
-    #runningLog span {
-      display: block;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-core.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/plugins/autoloader/prism-autoloader.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/helia@^3.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@^2.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/libp2p@^1.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-yamux@^6.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-noise@^15.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@libp2p/websockets@^8.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@libp2p/bootstrap@^10.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/blockstore-core@^4.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/datastore-core@^9.0.0/dist/index.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@libp2p/kad-dht@^12.0.0/dist/index.min.js" defer></script>
-  <script src="js/helia.js" type="module" defer></script>
-  <script nomodule>
-    alert('Your browser does not support importing ESM modules')
-  </script>
+      document.addEventListener('DOMContentLoaded', async () => {
+        const helia = window.helia = await instantiateHeliaNode();
+        window.heliaFs = await HeliaUnixfs.unixfs(helia);
 
- <script>
-        let helia;
-        let heliaFs;
+        helia.libp2p.addEventListener('peer:discovery', (evt) => {
+          window.discoveredPeers.set(evt.detail.id.toString(), evt.detail);
+        });
 
-        async function startHelia() {
-            try {
-                helia = await Helia.create();
-                heliaFs = UnixFS.createHeliaFs(helia);
-                document.getElementById("statusValue").innerText = "Running";
-                console.log("Helia node started");
-            } catch (error) {
-                console.error("Failed to start Helia:", error);
-                alert("Error starting Helia.");
-            }
+        helia.libp2p.addEventListener('peer:connect', (evt) => {
+          console.log(`Connected to ${evt.detail.toString()}`);
+        });
+      });
+
+      let heliaInstance = null;
+      const instantiateHeliaNode = async () => {
+        const datastore = new DatastoreCore.MemoryDatastore();
+        const blockstore = new BlockstoreCore.MemoryBlockstore();
+
+        if (heliaInstance != null) {
+          return heliaInstance;
         }
 
-        async function stopHelia() {
-            if (helia) {
-                await helia.stop();
-                document.getElementById("statusValue").innerText = "Stopped";
-                console.log("Helia node stopped");
-            }
-        }
+        heliaInstance = await Helia.createHelia({
+          datastore,
+          blockstore
+        });
 
-        async function addFile() {
-            const content = document.getElementById("fileContent").value;
-            if (!content) {
-                alert("Please enter content to add.");
-                return;
-            }
+        return heliaInstance;
+      };
 
-            try {
-                const textEncoder = new TextEncoder();
-                const cid = await heliaFs.addFile({
-                    content: textEncoder.encode(content),
-                });
-                document.getElementById("addedFileCID").innerText = cid.toString();
-                console.log("File added with CID:", cid.toString());
-            } catch (error) {
-                console.error("Failed to add file:", error);
-                alert("Error adding file.");
-            }
-        }
-
-        async function catFile() {
-            const cid = document.getElementById("retrieveCID").value;
-            if (!cid) {
-                alert("Please enter a CID.");
-                return;
-            }
-
-            try {
-                const textDecoder = new TextDecoder();
-                let content = "";
-
-                for await (const chunk of heliaFs.cat(cid)) {
-                    content += textDecoder.decode(chunk);
-                }
-
-                document.getElementById("retrievedContent").innerText = content;
-                console.log("File content retrieved:", content);
-            } catch (error) {
-                console.error("Failed to retrieve file:", error);
-                alert("Error retrieving file.");
-            }
-        }
+      window.discoveredPeers = new Map();
     </script>
-
-
+  </body>
 </html>
