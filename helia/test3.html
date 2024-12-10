@@ -101,13 +101,13 @@ ul#connectedPeersList{
                 if (!window.discoveredPeers.has(peerId)) {
                     window.discoveredPeers.set(peerId, evt.detail);  // Add discovered peer to the Map
                     updateDiscoveredPeers();  // Update the discovered peers count
-                    addToLog(`peer: ${peerId}`);  // Log the discovery event
+                    addToLog(`Peer: ${peerId}`);  // Log the discovery event
                 }
             });
 
             // Event listener for new peer connection
             helia.libp2p.addEventListener('peer:connect', (evt) => {
-                addToLog(`Connected to ${evt.detail}`);
+                addToLog(`Connected ${evt.detail}`);
             });
 
             // Continuously update the status and peers count
