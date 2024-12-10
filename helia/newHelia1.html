@@ -92,12 +92,12 @@
                 if (!window.discoveredPeers.has(peerId)) {
                     window.discoveredPeers.set(peerId, evt.detail);
                     updateDiscoveredPeers();
-                    addToLog(`Discovered: ${peerId}`);
+                    addToLog(`разведал: ${peerId}`);
                 }
             });
 
             helia.libp2p.addEventListener('peer:connect', (evt) => {
-                addToLog(`Connected : ${evt.detail}`);
+                addToLog(`пришпандорен : ${evt.detail}`);
             });
 
             setInterval(updateStatus, 500);
