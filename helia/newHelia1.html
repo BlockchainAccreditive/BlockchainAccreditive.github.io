@@ -13,8 +13,8 @@
 <br>
 <br>
     <div>
-        <button onclick="window.helia.start()">Start Helia</button>
-        <button onclick="window.helia.stop()">Stop Helia</button>
+        <button onclick="window.helia.start()">Start</button>
+        <button onclick="window.helia.stop()">Stop</button>
     </div>
     <h2>Status</h2>
     <p>Node Status: <span id="statusValue">Not Started</span></p>
@@ -88,12 +88,12 @@
                 if (!window.discoveredPeers.has(peerId)) {
                     window.discoveredPeers.set(peerId, evt.detail);
                     updateDiscoveredPeers();
-                    addToLog(`Discovered peer: ${peerId}`);
+                    addToLog(`Discovered: ${peerId}`);
                 }
             });
 
             helia.libp2p.addEventListener('peer:connect', (evt) => {
-                addToLog(`Connected to ${evt.detail}`);
+                addToLog(`Connected: ${evt.detail}`);
             });
 
             setInterval(updateStatus, 500);
