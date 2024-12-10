@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,15 +11,6 @@
     <link href="helia.css" rel="stylesheet" />
 </head>
 <body>
-    <!--<h1>IPFS in the Browser via Helia</h1>
-    <p>
-        This page creates an IPFS Helia node in your browser and sets a few other useful components into the global JavaScript namespace:
-        <ul>
-            <li><b>helia</b>: The Helia instance. You can access its libp2p instance as <b>helia.libp2p</b>.</li>
-            <li><b>heliaFs</b>: An instance of @helia/unixFS.</li>
-            <li><b>discoveredPeers</b>: A Map of discovered peers.</li>
-        </ul>
-    </p>-->
 <br>
 <br>
     <div>
@@ -166,29 +158,36 @@
                     img.style.maxWidth = '500px'; // Ограничиваем размер изображений до 500px по ширине
                     img.style.height = 'auto';
                     filePreviewEl.appendChild(img);
-                } else if (file.type === 'application/pdf') {
-                    // PDF файлы
+                               } else if (file.type === 'application/pdf') {
+                    // PDF файлы - отображаем через <iframe>
                     const iframe = document.createElement('iframe');
                     iframe.src = fileURL;
                     iframe.style.width = '100%';
-                    iframe.style.height = '500px'; // Высота для PDF
+                    iframe.style.height = '500px';
                     filePreviewEl.appendChild(iframe);
-                } else if (file.type.startsWith('audio/') || file.type.startsWith('video/')) {
-                                   // Аудио или Видео файлы
-                    const media = document.createElement(file.type.startsWith('audio/') ? 'audio' : 'video');
-                    media.controls = true;  // Добавляем элементы управления (play, pause и т.д.)
-                    media.src = fileURL;
-                    media.style.width = '100%';
-                    filePreviewEl.appendChild(media);
+                } else if (file.type.startsWith('audio/')) {
+                    // Аудио файлы
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = fileURL;
+                    audio.style.width = '100%';
+                    filePreviewEl.appendChild(audio);
+                } else if (file.type.startsWith('video/')) {
+                    // Видео файлы
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.src = fileURL;
+                    video.style.width = '100%';
+                    filePreviewEl.appendChild(video);
                 } else if (file.type === 'application/javascript' || file.type === 'application/typescript' || file.name.endsWith('.sol')) {
-                    // Код (js, ts, sol) - показываем в <pre>
+                    // Код (JS, TS, Sol) - показываем в <pre> с <code>
                     const pre = document.createElement('pre');
                     const code = document.createElement('code');
                     code.textContent = e.target.result;  // Отображаем содержимое файла
                     pre.appendChild(code);
                     filePreviewEl.appendChild(pre);
                 } else {
-                    // Для остальных типов файлов показываем ссылку для скачивания
+                    // Для других файлов - отображаем ссылку на скачивание
                     const downloadLink = document.createElement('a');
                     downloadLink.href = fileURL;
                     downloadLink.download = file.name; // Имя файла
@@ -212,7 +211,7 @@
 
             // Добавляем файл в IPFS
             const cid = await heliaFs.addFile({ content: file });
-            uploadedCidEl.textContent = cid.toString(); // Отображаем CID загруженного файла
+            uploadedCidEl.textContent = cid.toString();  // Отображаем CID загруженного файла
             addToLog(`File uploaded: ${cid}`);
         }
 
