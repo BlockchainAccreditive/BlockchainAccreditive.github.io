@@ -59,8 +59,8 @@ ul#connectedPeersList{
     <h2>Status</h2>
     <p>Node Status: <span id="statusValue">Not Started</span></p>
     <p>Node ID: <span id="nodeId">unknown</span></p>
-    <p>Discovered Peers: <span id="discoveredPeerCount">0</span></p>
-    <p>Connected Peers: <span id="connectedPeerCount">0</span></p>
+    <p>Discovered: <span id="discoveredPeerCount">0</span></p>
+    <p>Connected: <span id="connectedPeerCount">0</span></p>
     <ul id="connectedPeersList"></ul>
     <h2>Log</h2>
     <div id="runningLog"></div>
@@ -121,12 +121,12 @@ ul#connectedPeersList{
                 if (!window.discoveredPeers.has(peerId)) {
                     window.discoveredPeers.set(peerId, evt.detail);
                     updateDiscoveredPeers();
-                    addToLog(`Discovered peer: ${peerId}`);
+                    addToLog(`Discovered: ${peerId}`);
                 }
             });
 
             helia.libp2p.addEventListener('peer:connect', (evt) => {
-                addToLog(`Connected to ${evt.detail}`);
+                addToLog(`Connected: ${evt.detail}`);
             });
 
             setInterval(updateStatus, 500);
@@ -173,7 +173,7 @@ ul#connectedPeersList{
             }
         }
 
-        // Function to handle file upload and store on IPFS
+                     // Function to handle file upload and store on IPFS
         async function uploadFile() {
             const fileInput = document.getElementById('fileToUpload');
             const file = fileInput.files[0];  // Get the first file from the input
