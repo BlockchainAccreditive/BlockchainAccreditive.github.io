@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запрос к API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            white-space: pre-wrap; /* Для корректного отображения JSON */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Запрос к API для получения токена</h1>
+    <button id="getTokenBtn">Получить токен</button>
+    
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('getTokenBtn').addEventListener('click', function() {
+            const clientId = "{App client Id}";  // Замените на ваш реальный clientId
+            const clientSecret = "{App client secret}";  // Замените на ваш реальный clientSecret
+
+            const requestBody = {
+                clientId: clientId,
+                clientSecret: clientSecret
+            };
+
+            // Используем прокси для обхода CORS (CORS Anywhere)
+            fetch('https://cors-anywhere.herokuapp.com/https://api.emtech.com/integration/v1/auth/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('response').textContent = "Произошла ошибка: " + error.message;
+            });
+        });
+    </script>
+
+</body>
+</html>
