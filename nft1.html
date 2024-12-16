@@ -48,18 +48,18 @@
 <body>
     <div class="wallet-container">
         <div class="wallet-card openmask">
-            <div class="wallet-title">TON</div>
+            <div class="wallet-title">OpenMask</div>
             <div id="statusOpenMask" class="wallet-status">
                 <span>Status: Not connected</span>
-                <button class="copy-btn" onclick="copyToClipboard('statusOpenMask')">📋</button>
+                <button class="copy-btn" onclick="copyToClipboard('openmaskAddress')">📋</button>
             </div>
             <div id="nftOpenMask" class="wallet-footer">No NFT data available.</div>
         </div>
         <div class="wallet-card metamask">
-            <div class="wallet-title">ETH</div>
+            <div class="wallet-title">MetaMask</div>
             <div id="statusMetaMask" class="wallet-status">
                 <span>Status: Not connected</span>
-                <button class="copy-btn" onclick="copyToClipboard('statusMetaMask')">📋</button>
+                <button class="copy-btn" onclick="copyToClipboard('metamaskAddress')">📋</button>
             </div>
             <div id="nftMetaMask" class="wallet-footer">No NFT data available.</div>
         </div>
@@ -69,13 +69,16 @@
 
         const checkMetaMask = () => window.ethereum || null;
 
-        const copyToClipboard = (elementId) => {
-            const text = document.getElementById(elementId).querySelector('span').textContent.trim();
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
+        const copyToClipboard = (walletId) => {
+            const addressSpan = document.getElementById(walletId);
+            if (addressSpan) {
+                const fullAddress = addressSpan.dataset.fullAddress;
+                navigator.clipboard.writeText(fullAddress).then(() => {
+                    alert('Copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            }
         };
 
         const connectOpenMask = async () => {
@@ -88,8 +91,12 @@
 
             try {
                 const accounts = await provider.send('ton_requestAccounts');
-                const shortenedAccount = `${accounts[0].slice(0, 5)}...${accounts[0].slice(-4)}`;
-                document.getElementById('statusOpenMask').querySelector('span').textContent = `${shortenedAccount}`;
+                const fullAccount = accounts[0];
+                const shortenedAccount = `${fullAccount.slice(0, 5)}...${fullAccount.slice(-4)}`;
+                const statusElem = document.getElementById('statusOpenMask').querySelector('span');
+                statusElem.textContent = `Connected: ${shortenedAccount}`;
+                statusElem.id = 'openmaskAddress';
+                statusElem.dataset.fullAddress = fullAccount;
             } catch (error) {
                 document.getElementById('statusOpenMask').querySelector('span').textContent = 'Error connecting to OpenMask.';
             }
@@ -105,8 +112,12 @@
 
             try {
                 const accounts = await provider.request({ method: 'eth_requestAccounts' });
-                const shortenedAccount = `${accounts[0].slice(0, 5)}...${accounts[0].slice(-4)}`;
-                document.getElementById('statusMetaMask').querySelector('span').textContent = `${shortenedAccount}`;
+                const fullAccount = accounts[0];
+                const shortenedAccount = `${fullAccount.slice(0, 5)}...${fullAccount.slice(-4)}`;
+                const statusElem = document.getElementById('statusMetaMask').querySelector('span');
+                statusElem.textContent = `Connected: ${shortenedAccount}`;
+                statusElem.id = 'metamaskAddress';
+                statusElem.dataset.fullAddress = fullAccount;
             } catch (error) {
                 document.getElementById('statusMetaMask').querySelector('span').textContent = 'Error connecting to MetaMask.';
             }
