@@ -130,12 +130,12 @@
                 const info = document.getElementById('infoOpenMask');
 
                 animateText(status, `${accounts[0]}`);               // Подключено к OpenMask: 
-
-                const infoText = JSON.stringify({
+                const infoText = "\n"+balance +"\n"+networkName;
+              /*const infoText = JSON.stringify({
                     accounts,
                     balance,
                     version: provider.version || 'Неизвестно',
-                }, null, 2);
+                }, null, 2);*/
 
                 animateText(info, infoText);
                 console.log('Информация о OpenMask:', infoText);
@@ -171,8 +171,8 @@
                 const status = document.getElementById('statusMetaMask');
                 const info = document.getElementById('infoMetaMask');
 
-                animateText(status, `${accounts[0],networkName}`);      // Сеть: 
-                const infoText = accounts[0]+"\n"+balance +"\n"+networkName;
+                animateText(status, `${accounts[0]}`);      // Сеть: 
+                const infoText = "\n"+balance +"\n"+networkName;
                 
                 /*    isMetaMask: provider.isMetaMask || false,
                 }, null, 2);
