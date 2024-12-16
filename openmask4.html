@@ -7,10 +7,19 @@
     <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
 </head>
 <body>
-    <h1>Connect to Wallet</h1>
-    <button id="connectOpenMask">Connect OpenMask</button>
-    <button id="connectMetaMask">Connect MetaMask</button>
-    <p id="status">Wallet not connected</p>
+    <h1>Wallet Connections</h1>
+
+    <div>
+        <h2>OpenMask</h2>
+        <button id="connectOpenMask">Connect OpenMask</button>
+        <p id="statusOpenMask">OpenMask not connected</p>
+    </div>
+
+    <div>
+        <h2>MetaMask</h2>
+        <button id="connectMetaMask">Connect MetaMask</button>
+        <p id="statusMetaMask">MetaMask not connected</p>
+    </div>
 
     <script>
         // Check for OpenMask
@@ -29,13 +38,13 @@
 
             if (!provider) {
                 console.error('OpenMask not detected. Please install it.');
-                document.getElementById('status').innerText = 'OpenMask not detected. Install it first.';
+                document.getElementById('statusOpenMask').innerText = 'OpenMask not detected. Install it first.';
                 return;
             }
 
             try {
                 const accounts = await provider.send('ton_requestAccounts');
-                document.getElementById('status').innerText = `Connected to OpenMask: ${accounts[0]}`;
+                document.getElementById('statusOpenMask').innerText = `Connected to OpenMask: ${accounts[0]}`;
                 console.log('OpenMask account:', accounts[0]);
 
                 // Example: Initialize TonWeb with OpenMask provider
@@ -44,7 +53,7 @@
                 console.log('TonWeb initialized:', tonweb);
             } catch (error) {
                 console.error('OpenMask connection failed:', error);
-                document.getElementById('status').innerText = 'OpenMask connection failed.';
+                document.getElementById('statusOpenMask').innerText = 'OpenMask connection failed.';
             }
         });
 
@@ -54,17 +63,17 @@
 
             if (!provider) {
                 console.error('MetaMask not detected. Please install it.');
-                document.getElementById('status').innerText = 'MetaMask not detected. Install it first.';
+                document.getElementById('statusMetaMask').innerText = 'MetaMask not detected. Install it first.';
                 return;
             }
 
             try {
                 const accounts = await provider.request({ method: 'eth_requestAccounts' });
-                document.getElementById('status').innerText = `Connected to MetaMask: ${accounts[0]}`;
+                document.getElementById('statusMetaMask').innerText = `Connected to MetaMask: ${accounts[0]}`;
                 console.log('MetaMask account:', accounts[0]);
             } catch (error) {
                 console.error('MetaMask connection failed:', error);
-                document.getElementById('status').innerText = 'MetaMask connection failed.';
+                document.getElementById('statusMetaMask').innerText = 'MetaMask connection failed.';
             }
         });
     </script>
