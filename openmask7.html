@@ -4,84 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet Connections - Hacker Style</title>
-    <style>
-        body {
-            background-color: #000;
-            color: #33ff33;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            padding: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 2em;
-            text-transform: uppercase;
-            color: #00ff00;
-        }
-
-        .terminal {
-            background: #111;
-            border: 1px solid #33ff33;
-            border-radius: 5px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .terminal h2 {
-            color: #33ff33;
-            text-transform: uppercase;
-        }
-
-        button {
-            background-color: #111;
-            color: #33ff33;
-            border: 1px solid #33ff33;
-            padding: 10px 20px;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        button:hover {
-            background-color: #33ff33;
-            color: #000;
-        }
-
-        .status {
-            margin-top: 10px;
-        }
-
-        .info {
-            margin-top: 20px;
-            background: #222;
-            padding: 10px;
-            border: 1px dashed #33ff33;
-        }
-
-        .cursor {
-            display: inline-block;
-            background-color: #33ff33;
-            width: 10px;
-            height: 20px;
-            animation: blink 1s steps(2, start) infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            width: 0px;
-        }
+    <style>body {background-color: #000;color: #33ff33;
+        font-family: 'Courier New', Courier, monospace;margin: 0;padding: 0;}
+        .container {padding: 20px;}h1 {text-align: center;font-size: 2em;text-transform: uppercase;color: #00ff00;}
+        .terminal {background: #111;border: 1px solid #33ff33;border-radius: 5px;padding: 20px;margin: 20px 0;}
+        .terminal h2 {color: #33ff33;text-transform: uppercase;}
+        button {background-color: #111;color: #33ff33;border: 1px solid #33ff33;padding: 10px 20px;cursor: pointer;text-transform: uppercase;}
+        button:hover {background-color: #33ff33;color: #000;}
+        .status {margin-top: 10px;}.info {margin-top: 20px;background: #222;padding: 10px;border: 1px dashed #33ff33;}
+        .cursor {display: inline-block;background-color: #33ff33;width: 10px;height: 20px;animation: blink 1s steps(2, start) infinite;}@keyframes blink {
+            0%, 100% {opacity:1;}
+            50% {opacity: 0;}}::-webkit-scrollbar{width:0px;}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
 </head>
@@ -105,7 +38,6 @@
             <div><span style="position: relative;top: -5px;">&gt;</span> <span id="commandOutput"></span><span class="cursor"></span></div>
         </div>
     </div>
-
     <script>
         // Функция для проверки наличия OpenMask
         const checkOpenMask = () => {
