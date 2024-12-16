@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMask Integration</title>
+</head>
+<body>
+    <h1>Connect to Wallet</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="status">Wallet not connected</p>
+
+    <script>
+        const getProvider = () => {
+            if (window.ethereum) {
+                return window.ethereum; // MetaMask or other wallets using Ethereum provider
+            } else if (window.openmask) {
+                return window.openmask; // OpenMask provider
+            }
+            return null;
+        };
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            const provider = getProvider();
+
+            if (!provider) {
+                console.error('No Ethereum provider found. Install OpenMask or MetaMask.');
+                document.getElementById('status').innerText = 'No wallet detected. Install OpenMask or MetaMask.';
+                return;
+            }
+
+            try {
+                // Request wallet connection
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                document.getElementById('status').innerText = `Connected: ${accounts[0]}`;
+            } catch (error) {
+                console.error('User rejected connection or error occurred:', error);
+                document.getElementById('status').innerText = 'Connection failed';
+            }
+        });
+    </script>
+</body>
+</html>
