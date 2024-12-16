@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMask Integration</title>
+</head>
+<body>
+    <h1>Connect to OpenMask</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="status">Wallet not connected</p>
+
+    <script>
+        // Initialize OpenMask provider
+        const getProvider = () => {
+            if (window.ton) {
+                return window.ton; // OpenMask provider
+            }
+            return null;
+        };
+
+        // Detect if the OpenMask provider is ready
+        const initializeProvider = async () => {
+            if (!window.ton) {
+                window.addEventListener('tonready', () => onTonReady(), false);
+            } else {
+                onTonReady();
+            }
+        };
+
+        const onTonReady = () => {
+            const provider = window.ton;
+            console.log('OpenMask detected:', provider.isOpenMask);
+        };
+
+        // Handle wallet connection
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            const provider = getProvider();
+
+            if (!provider) {
+                console.error('OpenMask not detected. Please install OpenMask.');
+                document.getElementById('status').innerText = 'OpenMask not detected. Install it first.';
+                return;
+            }
+
+            try {
+                // Request accounts
+                const accounts = await provider.send('ton_requestAccounts');
+                document.getElementById('status').innerText = `Connected: ${accounts[0]}`;
+                console.log('Connected account:', accounts[0]);
+            } catch (error) {
+                console.error('Connection failed:', error);
+                document.getElementById('status').innerText = 'Failed to connect';
+            }
+        });
+
+        // Initialize OpenMask detection
+        initializeProvider();
+    </script>
+</body>
+</html>
