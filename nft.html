@@ -106,7 +106,7 @@
                 const accounts = await provider.send('ton_requestAccounts');
                 const nfts = await getOpenMaskNFTs(provider, accounts[0]);
 
-                document.getElementById('statusOpenMask').textContent = `Connected: ${accounts[0]}`;
+                document.getElementById('statusOpenMask').textContent = `${accounts[0].slice(0, 11)}`;  // Connected: 
                 document.getElementById('nftOpenMask').textContent = nfts.length > 0
                     ? `NFTs: ${nfts.map(nft => nft.name).join(', ')}`
                     : 'No NFTs found.';
@@ -128,7 +128,7 @@
                 const accounts = await provider.request({ method: 'eth_requestAccounts' });
                 const nfts = await getMetaMaskNFTs();
 
-                document.getElementById('statusMetaMask').textContent = `Connected: ${accounts[0]}`;
+                document.getElementById('statusMetaMask').textContent = `${accounts[0].slice(0, 11)}`; // Connected: 
                 document.getElementById('nftMetaMask').textContent = nfts.length > 0
                     ? `NFTs: ${nfts.map(nft => nft.name).join(', ')}`
                     : 'No NFTs found.';
