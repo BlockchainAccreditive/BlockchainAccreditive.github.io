@@ -22,14 +22,14 @@
     <div class="container">
         <div class="terminal">
             <h2>OpenMask</h2>
-            <p id="statusOpenMask" class="status animated" data-value="OpenMask not connected">not connected</p>
-            <pre id="infoOpenMask" class="info animated" data-value="No OpenMask information available">No information available</pre>
+            <p id="statusOpenMask" class="status animated" data-value="OpenMask not connected">OpenMask not connected</p>
+            <pre id="infoOpenMask" class="info animated" data-value="No OpenMask information available">No OpenMask information available</pre>
         </div>
 
         <div class="terminal">
             <h2>MetaMask</h2>
-            <p id="statusMetaMask" class="status animated" data-value="MetaMask not connected">not connected</p>
-            <pre id="infoMetaMask" class="info animated" data-value="No MetaMask information available">No information available</pre>
+            <p id="statusMetaMask" class="status animated" data-value="MetaMask not connected">MetaMask not connected</p>
+            <pre id="infoMetaMask" class="info animated" data-value="No MetaMask information available">No MetaMask information available</pre>
         </div>
 
         <div class="terminal">
@@ -41,31 +41,27 @@
     <script>
         const letters = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
 
-        let interval = null;
+        const animateText = (element, text) => {
+            let iteration = 0;
+            const originalText = text.split("");
 
-        document.querySelectorAll(".animated").forEach(element => {
-            const originalValue = element.innerText;
-            element.dataset.value = originalValue;
-            element.onmouseover = event => {  
-                let iteration = 0;
-                clearInterval(interval);
-                interval = setInterval(() => {
-                    event.target.innerText = event.target.dataset.value
-                        .split("")
-                        .map((letter, index) => {
-                            if(index < iteration) {
-                                return event.target.dataset.value[index];
-                            }
-                            return letters[Math.floor(Math.random() * letters.length)];
-                        })
-                        .join("");
-                    if(iteration >= event.target.dataset.value.length){ 
-                        clearInterval(interval);
-                    }
-                    iteration += 1 / 3;
-                }, 30);
-            };
-        });
+            const interval = setInterval(() => {
+                element.innerText = originalText
+                    .map((letter, index) => {
+                        if (index < iteration) {
+                            return originalText[index];
+                        }
+                        return letters[Math.floor(Math.random() * letters.length)];
+                    })
+                    .join("");
+
+                if (iteration >= originalText.length) {
+                    clearInterval(interval);
+                }
+
+                iteration += 1 / 3;
+            }, 30);
+        };
 
         // Функция для проверки наличия OpenMask
         const checkOpenMask = () => {
@@ -119,8 +115,10 @@
 
             if (!provider) {
                 console.error('OpenMask не обнаружен. Установите его.');
-                document.getElementById('statusOpenMask').innerText = 'OpenMask не обнаружен. Установите его.';
-                document.getElementById('infoOpenMask').innerText = 'Нет данных о OpenMask';
+                const status = document.getElementById('statusOpenMask');
+                const info = document.getElementById('infoOpenMask');
+                animateText(status, 'OpenMask не обнаружен. Установите его.');
+                animateText(info, 'Нет данных о OpenMask');
                 return;
             }
 
@@ -128,18 +126,25 @@
                 const accounts = await provider.send('ton_requestAccounts');
                 const balance = await getOpenMaskBalance(provider, accounts[0]);
 
-                document.getElementById('statusOpenMask').innerText = `Подключено к OpenMask: ${accounts[0]}`;
-                const info = {
+                const status = document.getElementById('statusOpenMask');
+                const info = document.getElementById('infoOpenMask');
+
+                animateText(status, `Подключено к OpenMask: ${accounts[0]}`);
+
+                const infoText = JSON.stringify({
                     accounts,
                     balance,
                     version: provider.version || 'Неизвестно',
-                };
-                document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
-                console.log('Информация о OpenMask:', info);
+                }, null, 2);
+
+                animateText(info, infoText);
+                console.log('Информация о OpenMask:', infoText);
             } catch (error) {
                 console.error('Ошибка при подключении к OpenMask:', error);
-                document.getElementById('statusOpenMask').innerText = 'Ошибка подключения к OpenMask.';
-                document.getElementById('infoOpenMask').innerText = `Ошибка: ${error.message}`;
+                const status = document.getElementById('statusOpenMask');
+                const info = document.getElementById('infoOpenMask');
+                animateText(status, 'Ошибка подключения к OpenMask.');
+                animateText(info, `Ошибка: ${error.message}`);
             }
         };
 
@@ -149,8 +154,10 @@
 
             if (!provider) {
                 console.error('MetaMask не обнаружен. Установите его.');
-                document.getElementById('statusMetaMask').innerText = 'MetaMask не обнаружен. Установите его.';
-                document.getElementById('infoMetaMask').innerText = 'Нет данных о MetaMask';
+                const status = document.getElementById('statusMetaMask');
+                const info = document.getElementById('infoMetaMask');
+                animateText(status, 'MetaMask не обнаружен. Установите его.');
+                animateText(info, 'Нет данных о MetaMask');
                 return;
             }
 
@@ -161,19 +168,26 @@
                 const chainId = await provider.request({ method: 'eth_chainId' });
                 const networkName = getNetworkName(parseInt(chainId, 16));
 
-                const info = {
+                const status = document.getElementById('statusMetaMask');
+                const info = document.getElementById('infoMetaMask');
+
+                animateText(status, `Сеть: ${networkName}`);
+
+                const infoText = JSON.stringify({
                     accounts,
                     balance,
                     networkName,
                     isMetaMask: provider.isMetaMask || false,
-                };
-                document.getElementById('statusMetaMask').innerText = `Сеть: ${networkName}`;
-                document.getElementById('infoMetaMask').innerText = JSON.stringify(info, null, 2);
-                console.log('Информация о MetaMask:', info);
+                }, null, 2);
+
+                animateText(info, infoText);
+                console.log('Информация о MetaMask:', infoText);
             } catch (error) {
                 console.error('Ошибка при подключении к MetaMask:', error);
-                document.getElementById('statusMetaMask').innerText = 'Ошибка подключения к MetaMask.';
-                document.getElementById('infoMetaMask').innerText = `Ошибка: ${error.message}`;
+                const status = document.getElementById('statusMetaMask');
+                const info = document.getElementById('infoMetaMask');
+                animateText(status, 'Ошибка подключения к MetaMask.');
+                animateText(info, `Ошибка: ${error.message}`);
             }
         };
 
