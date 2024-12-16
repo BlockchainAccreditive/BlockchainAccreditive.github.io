@@ -89,7 +89,7 @@
             try {
                 const accounts = await provider.send('ton_requestAccounts');
                 const shortenedAccount = `${accounts[0].slice(0, 5)}...${accounts[0].slice(-4)}`;
-                document.getElementById('statusOpenMask').querySelector('span').textContent = `Connected: ${shortenedAccount}`;
+                document.getElementById('statusOpenMask').querySelector('span').textContent = `${shortenedAccount}`;
             } catch (error) {
                 document.getElementById('statusOpenMask').querySelector('span').textContent = 'Error connecting to OpenMask.';
             }
@@ -106,7 +106,7 @@
             try {
                 const accounts = await provider.request({ method: 'eth_requestAccounts' });
                 const shortenedAccount = `${accounts[0].slice(0, 5)}...${accounts[0].slice(-4)}`;
-                document.getElementById('statusMetaMask').querySelector('span').textContent = `Connected: ${shortenedAccount}`;
+                document.getElementById('statusMetaMask').querySelector('span').textContent = `${shortenedAccount}`;
             } catch (error) {
                 document.getElementById('statusMetaMask').querySelector('span').textContent = 'Error connecting to MetaMask.';
             }
