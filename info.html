@@ -227,10 +227,11 @@
                 console.log('Информация о MetaMask:', info);
 
                 // Получаем баланс MetaMask
-                const balance = await provider.request({
+                /* const balance = await provider.request({
                     method: 'eth_getBalance',
                     params: [accounts[0], 'latest']
-                });
+                });*/
+
                 document.getElementById('balanceMetaMask').innerText = `Balance: ${parseInt(balance, 16) / 10 ** 18} ETH`;
                 // Получаем баланс MetaMask
                 const balance = await provider.request({
