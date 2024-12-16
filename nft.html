@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Connections - Hacker Style</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #33ff33;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            text-transform: uppercase;
+            color: #00ff00;
+        }
+        .terminal {
+            background: #111;
+            border: 1px solid #33ff33;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .terminal h2 {
+            color: #33ff33;
+            text-transform: uppercase;
+        }
+        button {
+            background-color: #111;
+            color: #33ff33;
+            border: 1px solid #33ff33;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background-color: #33ff33;
+            color: #000;
+        }
+        .status {
+            margin-top: 10px;
+        }
+        .info {
+            margin-top: 20px;
+            background: #222;
+            padding: 10px;
+            border: 1px dashed #33ff33;
+        }
+        .cursor {
+            display: inline-block;
+            background-color: #33ff33;
+            width: 10px;
+            height: 20px;
+            animation: blink 1s steps(2, start) infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        ::-webkit-scrollbar {
+            width: 0px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="terminal">
+            <h2>OpenMask</h2>
+            <p id="statusOpenMask" class="status animated" data-value="OpenMask not connected">OpenMask not connected</p>
+            <pre id="infoOpenMask" class="info animated" data-value="No OpenMask information available">No OpenMask information available</pre>
+            <pre id="nftOpenMask" class="info animated" data-value="OpenMask NFTs will appear here">OpenMask NFTs will appear here</pre>
+        </div>
+
+        <div class="terminal">
+            <h2>MetaMask</h2>
+            <p id="statusMetaMask" class="status animated" data-value="MetaMask not connected">MetaMask not connected</p>
+            <pre id="infoMetaMask" class="info animated" data-value="No MetaMask information available">No MetaMask information available</pre>
+            <pre id="nftMetaMask" class="info animated" data-value="MetaMask NFTs will appear here">MetaMask NFTs will appear here</pre>
+        </div>
+    </div>
+    <script>
+        const letters = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        // Animate text on hover
+        document.querySelectorAll(".animated").forEach(element => {
+            element.onmouseover = () => {
+                let iteration = 0;
+                const originalValue = element.dataset.value;
+                const interval = setInterval(() => {
+                    element.innerText = originalValue
+                        .split("")
+                        .map((char, index) => {
+                            if (index < iteration) {
+                                return originalValue[index];
+                            }
+                            return letters[Math.floor(Math.random() * letters.length)];
+                        })
+                        .join("");
+                    if (iteration >= originalValue.length) {
+                        clearInterval(interval);
+                    }
+                    iteration += 1 / 3;
+                }, 30);
+            };
+        });
+
+        // OpenMask integration
+        const connectOpenMask = async () => {
+            const provider = window.ton;
+            const status = document.getElementById("statusOpenMask");
+            const nftDisplay = document.getElementById("nftOpenMask");
+
+            if (!provider) {
+                status.innerText = "OpenMask not detected. Please install it.";
+                return;
+            }
+
+            try {
+                const accounts = await provider.send('ton_requestAccounts');
+                const nfts = await provider.send('ton_getNFTs', [accounts[0]]);
+                status.innerText = `Connected to OpenMask: ${accounts[0]}`;
+                nftDisplay.innerText = nfts.length > 0 ? JSON.stringify(nfts, null, 2) : "No NFTs found.";
+            } catch (error) {
+                status.innerText = "Error connecting to OpenMask.";
+                console.error(error);
+            }
+        };
+
+        // MetaMask integration
+        const connectMetaMask = async () => {
+            const provider = window.ethereum;
+            const status = document.getElementById("statusMetaMask");
+            const nftDisplay = document.getElementById("nftMetaMask");
+
+            if (!provider) {
+                status.innerText = "MetaMask not detected. Please install it.";
+                return;
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                status.innerText = `Connected to MetaMask: ${accounts[0]}, Network ID: ${parseInt(chainId, 16)}`;
+                nftDisplay.innerText = "Fetching NFTs..."; // Placeholder, replace with actual logic
+            } catch (error) {
+                status.innerText = "Error connecting to MetaMask.";
+                console.error(error);
+            }
+        };
+
+        // Initial connect
+        window.onload = () => {
+            connectOpenMask();
+            connectMetaMask();
+        };
+    </script>
+</body>
+</html>
