@@ -30,7 +30,6 @@
             border-radius: 5px;
             padding: 20px;
             margin: 20px 0;
-          /*box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);*/
         }
 
         .terminal h2 {
@@ -78,24 +77,24 @@
             50% {
                 opacity: 0;
             }
-        }::-webkit-scrollbar {width: 0px;}
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
 </head>
 <body>
     <div class="container">
-        <!--<h1>Connections</h1>-->
-
         <div class="terminal">
             <h2>OpenMask</h2>
-           <!-- <button id="connectOpenMask">Connect OpenMask</button> -->
             <p id="statusOpenMask" class="status">OpenMask not connected</p>
             <pre id="infoOpenMask" class="info">No OpenMask information available</pre>
         </div>
 
         <div class="terminal">
             <h2>MetaMask</h2>
-          <!-- <button id="connectMetaMask">Connect MetaMask</button> -->
             <p id="statusMetaMask" class="status">MetaMask not connected</p>
             <pre id="infoMetaMask" class="info">No MetaMask information available</pre>
         </div>
@@ -107,7 +106,7 @@
         </div>
     </div>
 
-  <script>
+    <script>
         // Функция для проверки наличия OpenMask
         const checkOpenMask = () => {
             return window.ton ? window.ton : null;
@@ -163,15 +162,6 @@
                 };
                 document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
                 console.log('Информация о OpenMask:', info);
-
-                // Инициализация TonWeb
-                const TonWeb = window.TonWeb; // Получаем доступ к TonWeb
-                const tonweb = new TonWeb(provider); // Создаем экземпляр TonWeb с провайдером
-                console.log('TonWeb инициализирован:', tonweb);
-
-                // Пример использования TonWeb для получения информации
-                const { address } = await tonweb.wallet.create({ publicKey: TonWeb.utils.base64ToBytes(accounts[0]) });
-                console.log('Адрес кошелька:', address.toString());
             } catch (error) {
                 console.error('Ошибка при подключении к OpenMask:', error);
                 document.getElementById('statusOpenMask').innerText = 'Ошибка подключения к OpenMask.';
