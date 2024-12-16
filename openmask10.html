@@ -131,7 +131,7 @@
 
             try {
                 const accounts = await provider.send('ton_requestAccounts');
-                document.getElementById('statusOpenMask').innerText = `Подключено к OpenMask: ${accounts[0]}`;
+                document.getElementById('statusOpenMask').innerText = `${accounts[0]}`;    // Подключено к OpenMask: 
                 console.log('Аккаунт OpenMask:', accounts[0]);
 
                 let network;
@@ -173,7 +173,7 @@
 
             try {
                 const accounts = await provider.request({ method: 'eth_requestAccounts' });
-                document.getElementById('statusMetaMask').innerText = `Подключено к MetaMask: ${accounts[0]}`;
+                document.getElementById('statusMetaMask').innerText = `${accounts[0]}`;            // Подключено к MetaMask: 
                 console.log('Аккаунт MetaMask:', accounts[0]);
 
                 const networkId = await provider.request({ method: 'net_version' });
