@@ -133,64 +133,34 @@
             return networks[chainId] || "Unknown Network";  // Возвращаем имя сети по ID или "Unknown Network"
         }
 
-        // Функция для получения баланса OpenMask (TON)
-        const getOpenMaskBalance = async (account) => {
-            const provider = checkOpenMask();
-            if (!provider) return;
+// Функция для получения баланса OpenMask (TON)
+const getOpenMaskBalance = async (account) => {
+    const provider = checkOpenMask();
+    if (!provider) return;
 
-            try {
-                const TonWeb = window.TonWeb;
-                const tonweb = new TonWeb(provider);
+    try {
+        const TonWeb = window.TonWeb;
+        const tonweb = new TonWeb(provider);
 
-                const wallet = tonweb.wallet.create({ publicKey: TonWeb.utils.base64ToBytes(account) });
-                const balance = await wallet.getBalance();
-                document.getElementById('balanceOpenMask').innerText = `Balance: ${balance / TonWeb.utils.toNano(1)} TON`;
-            } catch (error) {
-                console.error('Ошибка при получении баланса OpenMask:', error);
-                document.getElementById('balanceOpenMask').innerText = 'Ошибка при получении баланса';
-            }
-        };
+        // Проверяем, является ли аккаунт строкой Base64
+        if (!account || typeof account !== 'string') {
+            throw new Error('Неверный формат аккаунта: ожидалась строка Base64');
+        }
 
-        // Функция для подключения к OpenMask
-        const connectOpenMask = async () => {
-            const provider = checkOpenMask();
+        // Декодируем Base64 строку в байты
+        const publicKeyBytes = TonWeb.utils.base64ToBytes(account);
+        
+        // Создаем кошелек с публичным ключом
+        const wallet = tonweb.wallet.create({ publicKey: publicKeyBytes });
 
-            if (!provider) {
-                console.error('OpenMask не обнаружен. Установите его.');
-                document.getElementById('statusOpenMask').innerText = 'OpenMask не обнаружен. Установите его.';
-                document.getElementById('infoOpenMask').innerText = 'Нет данных о OpenMask';
-                return;
-            }
-
-            try {
-                const accounts = await provider.send('ton_requestAccounts');
-                document.getElementById('statusOpenMask').innerText = `Подключено к OpenMask: ${accounts[0]}`;
-                console.log('Аккаунт OpenMask:', accounts[0]);
-
-                let network;
-                try {
-                    network = await provider.send('ton_getNetwork');
-                } catch (networkError) {
-                    console.warn('ton_getNetwork не поддерживается:', networkError);
-                    network = 'Неизвестно (метод не поддерживается)';
-                }
-
-                const info = {
-                    accounts,
-                    network,
-                    version: provider.version || 'Неизвестно',
-                };
-                document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
-                console.log('Информация о OpenMask:', info);
-
-                // Получаем баланс OpenMask
-                await getOpenMaskBalance(accounts[0]);
-            } catch (error) {
-                console.error('Ошибка при подключении к OpenMask:', error);
-                document.getElementById('statusOpenMask').innerText = 'Ошибка подключения к OpenMask.';
-                document.getElementById('infoOpenMask').innerText = `Ошибка: ${error.message}`;
-            }
-        };
+        // Получаем баланс
+        const balance = await wallet.getBalance();
+        document.getElementById('balanceOpenMask').innerText = `Balance: ${balance / TonWeb.utils.toNano(1)} TON`;
+    } catch (error) {
+        console.error('Ошибка при получении баланса OpenMask:', error);
+        document.getElementById('balanceOpenMask').innerText = 'Ошибка при получении баланса';
+    }
+};
 
         // Функция для подключения к MetaMask
         const connectMetaMask = async () => {
