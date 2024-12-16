@@ -70,7 +70,7 @@
 
     <div class="wallet-container">
         <div class="wallet-card openmask">
-            <div class="wallet-title">OpenMask</div>
+            <div class="wallet-title">TON</div>
             <div id="statusOpenMask" class="wallet-status">
                 <span>Status: Not connected</span>
                 <button class="copy-btn" onclick="copyToClipboard('openmaskAddress')">📋</button>
@@ -78,7 +78,7 @@
             <div id="nftOpenMask" class="wallet-footer">No NFT data available.</div>
         </div>
         <div class="wallet-card metamask">
-            <div class="wallet-title">MetaMask</div>
+            <div class="wallet-title">ETH</div>
             <div id="statusMetaMask" class="wallet-status">
                 <span>Status: Not connected</span>
                 <button class="copy-btn" onclick="copyToClipboard('metamaskAddress')">📋</button>
@@ -117,7 +117,7 @@
                 const fullAccount = accounts[0];
                 const shortenedAccount = `${fullAccount.slice(0, 5)}...${fullAccount.slice(-4)}`;
                 const statusElem = document.getElementById('statusOpenMask').querySelector('span');
-                statusElem.textContent = `Connected: ${shortenedAccount}`;
+                statusElem.textContent = `${shortenedAccount}`;
                 statusElem.id = 'openmaskAddress';
                 statusElem.dataset.fullAddress = fullAccount;
             } catch (error) {
@@ -138,7 +138,7 @@
                 const fullAccount = accounts[0];
                 const shortenedAccount = `${fullAccount.slice(0, 5)}...${fullAccount.slice(-4)}`;
                 const statusElem = document.getElementById('statusMetaMask').querySelector('span');
-                statusElem.textContent = `Connected: ${shortenedAccount}`;
+                statusElem.textContent = `${shortenedAccount}`;
                 statusElem.id = 'metamaskAddress';
                 statusElem.dataset.fullAddress = fullAccount;
             } catch (error) {
