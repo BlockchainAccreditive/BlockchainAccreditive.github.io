@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Connections - Hacker Style</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #33ff33;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            text-transform: uppercase;
+            color: #00ff00;
+        }
+
+        .terminal {
+            background: #111;
+            border: 1px solid #33ff33;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .terminal h2 {
+            color: #33ff33;
+            text-transform: uppercase;
+        }
+
+        button {
+            background-color: #111;
+            color: #33ff33;
+            border: 1px solid #33ff33;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: #33ff33;
+            color: #000;
+        }
+
+        .status {
+            margin-top: 10px;
+        }
+
+        .info {
+            margin-top: 20px;
+            background: #222;
+            padding: 10px;
+            border: 1px dashed #33ff33;
+        }
+
+        .cursor {
+            display: inline-block;
+            background-color: #33ff33;
+            width: 10px;
+            height: 20px;
+            animation: blink 1s steps(2, start) infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="terminal">
+            <h2>OpenMask</h2>
+            <p id="statusOpenMask" class="status">OpenMask not connected</p>
+            <pre id="infoOpenMask" class="info">No OpenMask information available</pre>
+            <p id="balanceOpenMask" class="status">Balance: Loading...</p>
+        </div>
+
+        <div class="terminal">
+            <h2>MetaMask</h2>
+            <p id="statusMetaMask" class="status">MetaMask not connected</p>
+            <pre id="infoMetaMask" class="info">No MetaMask information available</pre>
+            <p id="balanceMetaMask" class="status">Balance: Loading...</p>
+        </div>
+
+        <div class="terminal">
+            <h2>Command Input</h2>
+            <p>Enter a command below:</p>
+            <div><span style="position: relative;top: -5px;">&gt;</span> <span id="commandOutput"></span><span class="cursor"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // Функция для проверки наличия OpenMask
+        const checkOpenMask = () => {
+            return window.ton ? window.ton : null;
+        };
+
+        // Функция для проверки наличия MetaMask
+        const checkMetaMask = () => {
+            return window.ethereum ? window.ethereum : null;
+        };
+
+        // Функция для получения имени сети по ее ID
+        function getNetworkName(chainId) {
+            const networks = {
+                1: "Ethereum Mainnet",  // Основная сеть Ethereum
+                3: "Ropsten",  // Тестовая сеть Ropsten
+                4: "Rinkeby",  // Тестовая сеть Rinkeby
+                5: "Goerli",  // Тестовая сеть Goerli
+                42: "Kovan",  // Тестовая сеть Kovan
+                11155111: "Sepolia",  // Тестовая сеть Sepolia
+                1337: "Localhost (Ganache)"  // Локальная сеть для тестирования
+            };
+            return networks[chainId] || "Unknown Network";  // Возвращаем имя сети по ID или "Unknown Network"
+        }
+
+        // Функция для получения баланса OpenMask (TON)
+        const getOpenMaskBalance = async (account) => {
+            const provider = checkOpenMask();
+            if (!provider) return;
+
+            try {
+                const TonWeb = window.TonWeb;
+                const tonweb = new TonWeb(provider);
+
+                const wallet = tonweb.wallet.create({ publicKey: TonWeb.utils.base64ToBytes(account) });
+                const balance = await wallet.getBalance();
+                document.getElementById('balanceOpenMask').innerText = `Balance: ${balance / TonWeb.utils.toNano(1)} TON`;
+            } catch (error) {
+                console.error('Ошибка при получении баланса OpenMask:', error);
+                document.getElementById('balanceOpenMask').innerText = 'Ошибка при получении баланса';
+            }
+        };
+
+        // Функция для подключения к OpenMask
+        const connectOpenMask = async () => {
+            const provider = checkOpenMask();
+
+            if (!provider) {
+                console.error('OpenMask не обнаружен. Установите его.');
+                document.getElementById('statusOpenMask').innerText = 'OpenMask не обнаружен. Установите его.';
+                document.getElementById('infoOpenMask').innerText = 'Нет данных о OpenMask';
+                return;
+            }
+
+            try {
+                const accounts = await provider.send('ton_requestAccounts');
+                document.getElementById('statusOpenMask').innerText = `Подключено к OpenMask: ${accounts[0]}`;
+                console.log('Аккаунт OpenMask:', accounts[0]);
+
+                let network;
+                try {
+                    network = await provider.send('ton_getNetwork');
+                } catch (networkError) {
+                    console.warn('ton_getNetwork не поддерживается:', networkError);
+                    network = 'Неизвестно (метод не поддерживается)';
+                }
+
+                const info = {
+                    accounts,
+                    network,
+                    version: provider.version || 'Неизвестно',
+                };
+                document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
+                console.log('Информация о OpenMask:', info);
+
+                // Получаем баланс OpenMask
+                await getOpenMaskBalance(accounts[0]);
+            } catch (error) {
+                console.error('Ошибка при подключении к OpenMask:', error);
+                document.getElementById('statusOpenMask').innerText = 'Ошибка подключения к OpenMask.';
+                document.getElementById('infoOpenMask').innerText = `Ошибка: ${error.message}`;
+            }
+        };
+
+        // Функция для подключения к MetaMask
+        const connectMetaMask = async () => {
+            const provider = checkMetaMask();
+
+            if (!provider) {
+                console.error('MetaMask не обнаружен. Установите его.');
+                document.getElementById('statusMetaMask').innerText = 'MetaMask не обнаружен. Установите его.';
+                document.getElementById('infoMetaMask').innerText = 'Нет данных о MetaMask';
+                return;
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                document.getElementById('statusMetaMask').innerText = `Подключено к MetaMask: ${accounts[0]}`;
+                console.log('Аккаунт MetaMask:', accounts[0]);
+
+                // Получаем ID сети
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                // Получаем имя сети
+                const networkName = getNetworkName(parseInt(chainId, 16));
+
+                const networkId = await provider.request({ method: 'net_version' });
+
+                const info = {
+                    accounts,
+                    networkId,
+                    chainId,
+                    networkName,  // Добавляем имя сети
+                    isMetaMask: provider.isMetaMask || false,
+                };
+                document.getElementById('statusMetaMask').innerText = `Подключено к MetaMask (Сеть: ${networkName})`;
+                document.getElementById('infoMetaMask').innerText = JSON.stringify(info, null, 2);
+                console.log('Информация о MetaMask:', info);
+
+                // Получаем баланс MetaMask
+                const balance = await provider.request({
+                    method: 'eth_getBalance',
+                    params: [accounts[0], 'latest']
+                });
+                document.getElementById('balanceMetaMask').innerText = `Balance: ${parseInt(balance, 16) / 10 ** 18} ETH`;
+                // Получаем баланс MetaMask
+                const balance = await provider.request({
+                    method: 'eth_getBalance',
+                    params: [accounts[0], 'latest']
+                });
+                document.getElementById('balanceMetaMask').innerText = `Balance: ${parseInt(balance, 16) / 10 ** 18} ETH`;
+            } catch (error) {
+                console.error('Ошибка при подключении к MetaMask:', error);
+                document.getElementById('statusMetaMask').innerText = 'Ошибка подключения к MetaMask.';
+                document.getElementById('infoMetaMask').innerText = `Ошибка: ${error.message}`;
+            }
+        };
+        // Автоматически подключаемся к OpenMask и MetaMask при загрузке страницы
+        window.onload = () => {
+            connectOpenMask();  // Попытка подключения к OpenMask
+            connectMetaMask();  // Попытка подключения к MetaMask
+        };
+    </script>
+</body>
+</html>
