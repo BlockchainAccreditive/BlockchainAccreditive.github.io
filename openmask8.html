@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Connections - Hacker Style</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #33ff33;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            text-transform: uppercase;
+            color: #00ff00;
+        }
+
+        .terminal {
+            background: #111;
+            border: 1px solid #33ff33;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+
+        .terminal h2 {
+            color: #33ff33;
+            text-transform: uppercase;
+        }
+
+        button {
+            background-color: #111;
+            color: #33ff33;
+            border: 1px solid #33ff33;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: #33ff33;
+            color: #000;
+        }
+
+        .status {
+            margin-top: 10px;
+        }
+
+        .info {
+            margin-top: 20px;
+            background: #222;
+            padding: 10px;
+            border: 1px dashed #33ff33;
+        }
+
+        .cursor {
+            display: inline-block;
+            background-color: #33ff33;
+            width: 10px;
+            height: 20px;
+            animation: blink 1s steps(2, start) infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Wallet Connections</h1>
+
+        <div class="terminal">
+            <h2>OpenMask</h2>
+            <button id="connectOpenMask">Connect OpenMask</button>
+            <p id="statusOpenMask" class="status">OpenMask not connected</p>
+            <pre id="infoOpenMask" class="info">No OpenMask information available</pre>
+        </div>
+
+        <div class="terminal">
+            <h2>MetaMask</h2>
+            <button id="connectMetaMask">Connect MetaMask</button>
+            <p id="statusMetaMask" class="status">MetaMask not connected</p>
+            <pre id="infoMetaMask" class="info">No MetaMask information available</pre>
+        </div>
+
+        <div class="terminal">
+            <h2>Command Input</h2>
+            <p>Enter a command below:</p>
+            <div><span>&gt;</span> <span id="commandOutput"></span><span class="cursor"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // Check for OpenMask
+        const checkOpenMask = () => {
+            return window.ton ? window.ton : null;
+        };
+
+        // Check for MetaMask
+        const checkMetaMask = () => {
+            return window.ethereum ? window.ethereum : null;
+        };
+
+        // OpenMask connection
+        document.getElementById('connectOpenMask').addEventListener('click', async () => {
+            const provider = checkOpenMask();
+
+            if (!provider) {
+                console.error('OpenMask not detected. Please install it.');
+                document.getElementById('statusOpenMask').innerText = 'OpenMask not detected. Install it first.';
+                document.getElementById('infoOpenMask').innerText = 'No OpenMask information available';
+                return;
+            }
+
+            try {
+    const accounts = await provider.send('ton_requestAccounts');
+    document.getElementById('statusOpenMask').innerText = `Connected to OpenMask: ${accounts[0]}`;
+    console.log('OpenMask account:', accounts[0]);
+
+    let network;
+    try {
+        network = await provider.send('ton_getNetwork');
+    } catch (networkError) {
+        console.warn('ton_getNetwork not implemented:', networkError);
+        network = 'Unknown (method not supported)';
+    }
+
+    const info = {
+        accounts,
+        network,
+        version: provider.version || 'Unknown',
+    };
+    document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
+    console.log('OpenMask Info:', info);
+
+    const TonWeb = window.TonWeb;
+    const tonweb = new TonWeb(provider);
+    console.log('TonWeb initialized:', tonweb);
+} catch (error) {
+    console.error('OpenMask connection failed:', error);
+    document.getElementById('statusOpenMask').innerText = 'OpenMask connection failed.';
+    document.getElementById('infoOpenMask').innerText = `Error: ${error.message}`;
+}
+
+        });
+
+        // MetaMask connection
+        document.getElementById('connectMetaMask').addEventListener('click', async () => {
+            const provider = checkMetaMask();
+
+            if (!provider) {
+                console.error('MetaMask not detected. Please install it.');
+                document.getElementById('statusMetaMask').innerText = 'MetaMask not detected. Install it first.';
+                document.getElementById('infoMetaMask').innerText = 'No MetaMask information available';
+                return;
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                document.getElementById('statusMetaMask').innerText = `Connected to MetaMask: ${accounts[0]}`;
+                console.log('MetaMask account:', accounts[0]);
+
+                const networkId = await provider.request({ method: 'net_version' });
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                const info = {
+                    accounts,
+                    networkId,
+                    chainId,
+                    isMetaMask: provider.isMetaMask || false,
+                };
+                document.getElementById('infoMetaMask').innerText = JSON.stringify(info, null, 2);
+                console.log('MetaMask Info:', info);
+            } catch (error) {
+                console.error('MetaMask connection failed:', error);
+                document.getElementById('statusMetaMask').innerText = 'MetaMask connection failed.';
+                document.getElementById('infoMetaMask').innerText = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
