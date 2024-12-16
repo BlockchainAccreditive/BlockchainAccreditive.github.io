@@ -30,7 +30,7 @@
             border-radius: 5px;
             padding: 20px;
             margin: 20px 0;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+          /*box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);*/
         }
 
         .terminal h2 {
@@ -78,24 +78,24 @@
             50% {
                 opacity: 0;
             }
-        }
+        }::-webkit-scrollbar {width: 0px;}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Wallet Connections</h1>
+        <!--<h1>Connections</h1>-->
 
         <div class="terminal">
             <h2>OpenMask</h2>
-            <button id="connectOpenMask">Connect OpenMask</button>
+           <!-- <button id="connectOpenMask">Connect OpenMask</button> -->
             <p id="statusOpenMask" class="status">OpenMask not connected</p>
             <pre id="infoOpenMask" class="info">No OpenMask information available</pre>
         </div>
 
         <div class="terminal">
             <h2>MetaMask</h2>
-            <button id="connectMetaMask">Connect MetaMask</button>
+          <!-- <button id="connectMetaMask">Connect MetaMask</button> -->
             <p id="statusMetaMask" class="status">MetaMask not connected</p>
             <pre id="infoMetaMask" class="info">No MetaMask information available</pre>
         </div>
@@ -103,87 +103,127 @@
         <div class="terminal">
             <h2>Command Input</h2>
             <p>Enter a command below:</p>
-            <div><span>&gt;</span> <span id="commandOutput"></span><span class="cursor"></span></div>
+            <div><span style="position: relative;top: -5px;">&gt;</span> <span id="commandOutput"></span><span class="cursor"></span></div>
         </div>
     </div>
 
-    <script>
-        // Check for OpenMask
+  <script>
+        // Функция для проверки наличия OpenMask
         const checkOpenMask = () => {
             return window.ton ? window.ton : null;
         };
 
-        // Check for MetaMask
+        // Функция для проверки наличия MetaMask
         const checkMetaMask = () => {
             return window.ethereum ? window.ethereum : null;
         };
 
-        // OpenMask connection
-        document.getElementById('connectOpenMask').addEventListener('click', async () => {
+        // Функция для получения имени сети по ее ID
+        function getNetworkName(chainId) {
+            const networks = {
+                1: "Ethereum Mainnet",  // Основная сеть Ethereum
+                3: "Ropsten",  // Тестовая сеть Ropsten
+                4: "Rinkeby",  // Тестовая сеть Rinkeby
+                5: "Goerli",  // Тестовая сеть Goerli
+                42: "Kovan",  // Тестовая сеть Kovan
+                11155111: "Sepolia",  // Тестовая сеть Sepolia
+                1337: "Localhost (Ganache)"  // Локальная сеть для тестирования
+            };
+            return networks[chainId] || "Unknown Network";  // Возвращаем имя сети по ID или "Unknown Network"
+        }
+
+        // Функция для подключения к OpenMask
+        const connectOpenMask = async () => {
             const provider = checkOpenMask();
 
             if (!provider) {
-                console.error('OpenMask not detected. Please install it.');
-                document.getElementById('statusOpenMask').innerText = 'OpenMask not detected. Install it first.';
-                document.getElementById('infoOpenMask').innerText = 'No OpenMask information available';
+                console.error('OpenMask не обнаружен. Установите его.');
+                document.getElementById('statusOpenMask').innerText = 'OpenMask не обнаружен. Установите его.';
+                document.getElementById('infoOpenMask').innerText = 'Нет данных о OpenMask';
                 return;
             }
 
             try {
                 const accounts = await provider.send('ton_requestAccounts');
-                document.getElementById('statusOpenMask').innerText = `Connected to OpenMask: ${accounts[0]}`;
-                console.log('OpenMask account:', accounts[0]);
+                document.getElementById('statusOpenMask').innerText = `Подключено к OpenMask: ${accounts[0]}`;
+                console.log('Аккаунт OpenMask:', accounts[0]);
+
+                let network;
+                try {
+                    network = await provider.send('ton_getNetwork');
+                } catch (networkError) {
+                    console.warn('ton_getNetwork не поддерживается:', networkError);
+                    network = 'Неизвестно (метод не поддерживается)';
+                }
 
                 const info = {
                     accounts,
-                    network: await provider.send('ton_getNetwork'),
-                    version: provider.version || 'Unknown',
+                    network,
+                    version: provider.version || 'Неизвестно',
                 };
                 document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
-                console.log('OpenMask Info:', info);
+                console.log('Информация о OpenMask:', info);
 
-                const TonWeb = window.TonWeb;
-                const tonweb = new TonWeb(provider);
-                console.log('TonWeb initialized:', tonweb);
+                // Инициализация TonWeb
+                const TonWeb = window.TonWeb; // Получаем доступ к TonWeb
+                const tonweb = new TonWeb(provider); // Создаем экземпляр TonWeb с провайдером
+                console.log('TonWeb инициализирован:', tonweb);
+
+                // Пример использования TonWeb для получения информации
+                const { address } = await tonweb.wallet.create({ publicKey: TonWeb.utils.base64ToBytes(accounts[0]) });
+                console.log('Адрес кошелька:', address.toString());
             } catch (error) {
-                console.error('OpenMask connection failed:', error);
-                document.getElementById('statusOpenMask').innerText = 'OpenMask connection failed.';
-                document.getElementById('infoOpenMask').innerText = `Error: ${error.message}`;
+                console.error('Ошибка при подключении к OpenMask:', error);
+                document.getElementById('statusOpenMask').innerText = 'Ошибка подключения к OpenMask.';
+                document.getElementById('infoOpenMask').innerText = `Ошибка: ${error.message}`;
             }
-        });
+        };
 
-        // MetaMask connection
-        document.getElementById('connectMetaMask').addEventListener('click', async () => {
+        // Функция для подключения к MetaMask
+        const connectMetaMask = async () => {
             const provider = checkMetaMask();
 
             if (!provider) {
-                console.error('MetaMask not detected. Please install it.');
-                document.getElementById('statusMetaMask').innerText = 'MetaMask not detected. Install it first.';
-                document.getElementById('infoMetaMask').innerText = 'No MetaMask information available';
+                console.error('MetaMask не обнаружен. Установите его.');
+                document.getElementById('statusMetaMask').innerText = 'MetaMask не обнаружен. Установите его.';
+                document.getElementById('infoMetaMask').innerText = 'Нет данных о MetaMask';
                 return;
             }
 
             try {
                 const accounts = await provider.request({ method: 'eth_requestAccounts' });
-                document.getElementById('statusMetaMask').innerText = `Connected to MetaMask: ${accounts[0]}`;
-                console.log('MetaMask account:', accounts[0]);
+                document.getElementById('statusMetaMask').innerText = `Подключено к MetaMask: ${accounts[0]}`;
+                console.log('Аккаунт MetaMask:', accounts[0]);
+
+                // Получаем ID сети
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                // Получаем имя сети
+                const networkName = getNetworkName(parseInt(chainId, 16));
 
                 const networkId = await provider.request({ method: 'net_version' });
-                const chainId = await provider.request({ method: 'eth_chainId' });
+
                 const info = {
                     accounts,
                     networkId,
                     chainId,
+                    networkName,  // Добавляем имя сети
                     isMetaMask: provider.isMetaMask || false,
                 };
+                document.getElementById('statusMetaMask').innerText = `Подключено к MetaMask (Сеть: ${networkName})`;
                 document.getElementById('infoMetaMask').innerText = JSON.stringify(info, null, 2);
-                console.log('MetaMask Info:', info);
+                console.log('Информация о MetaMask:', info);
             } catch (error) {
-                console.error('MetaMask connection failed:', error);
-                document.getElementById('statusMetaMask').innerText = 'MetaMask connection failed.';
-                document.getElementById('infoMetaMask').innerText = `Error: ${error.message}`;
+                console.error('Ошибка при подключении к MetaMask:', error);
+                document.getElementById('statusMetaMask').innerText = 'Ошибка подключения к MetaMask.';
+                document.getElementById('infoMetaMask').innerText = `Ошибка: ${error.message}`;
             }
-        });
+        };
+
+        // Автоматически подключаемся к OpenMask и MetaMask при загрузке страницы
+        window.onload = () => {
+            connectOpenMask();  // Попытка подключения к OpenMask
+            connectMetaMask();  // Попытка подключения к MetaMask
+        };
     </script>
 </body>
 </html>
