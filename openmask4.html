@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMask and MetaMask Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
+</head>
+<body>
+    <h1>Connect to Wallet</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="status">Wallet not connected</p>
+
+    <script>
+        // Initialize provider for OpenMask and MetaMask
+        const getProvider = () => {
+            if (window.ethereum) {
+                return window.ethereum; // MetaMask or Ethereum-based wallets
+            } else if (window.ton) {
+                return window.ton; // OpenMask wallet
+            }
+            return null;
+        };
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            const provider = getProvider();
+
+            if (!provider) {
+                console.error('No wallet detected. Please install OpenMask or MetaMask.');
+                document.getElementById('status').innerText = 'No wallet detected. Install OpenMask or MetaMask.';
+                return;
+            }
+
+            if (provider === window.ethereum) {
+                // MetaMask integration
+                try {
+                    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                    document.getElementById('status').innerText = `Connected to MetaMask: ${accounts[0]}`;
+                    console.log('MetaMask account:', accounts[0]);
+                } catch (error) {
+                    console.error('MetaMask connection failed:', error);
+                    document.getElementById('status').innerText = 'MetaMask connection failed.';
+                }
+            } else if (provider === window.ton) {
+                // OpenMask integration
+                try {
+                    const accounts = await provider.send('ton_requestAccounts');
+                    document.getElementById('status').innerText = `Connected to OpenMask: ${accounts[0]}`;
+                    console.log('OpenMask account:', accounts[0]);
+
+                    // Example: Initialize TonWeb with OpenMask provider
+                    const TonWeb = window.TonWeb;
+                    const tonweb = new TonWeb(provider);
+                    console.log('TonWeb initialized:', tonweb);
+                } catch (error) {
+                    console.error('OpenMask connection failed:', error);
+                    document.getElementById('status').innerText = 'OpenMask connection failed.';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
