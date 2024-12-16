@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMask Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
+</head>
+<body>
+    <h1>Connect to OpenMask</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="status">Wallet not connected</p>
+
+    <script>
+        const initializeProvider = () => {
+            if (window.ton) {
+                console.log("OpenMask detected!");
+                return window.ton;
+            } else {
+                console.error("OpenMask not found. Please install it.");
+                return null;
+            }
+        };
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            const provider = initializeProvider();
+
+            if (!provider) {
+                document.getElementById('status').innerText = 'OpenMask not detected. Install it first.';
+                return;
+            }
+
+            try {
+                // Request accounts
+                const accounts = await provider.send('ton_requestAccounts');
+                document.getElementById('status').innerText = `Connected: ${accounts[0]}`;
+                console.log("Connected to account:", accounts[0]);
+
+                // Example: Initialize TonWeb with OpenMask provider
+                const TonWeb = window.TonWeb;
+                const tonweb = new TonWeb(provider);
+                console.log("TonWeb initialized:", tonweb);
+
+            } catch (error) {
+                console.error("Error connecting to OpenMask:", error);
+                document.getElementById('status').innerText = 'Connection failed.';
+            }
+        });
+    </script>
+</body>
+</html>
