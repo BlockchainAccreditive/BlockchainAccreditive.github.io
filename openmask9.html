@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Connect to OpenMask and MetaMask</title>
+</head>
+<body>
+    <h1>Автоподключение к OpenMask и MetaMask</h1>
+    <div id="statusOpenMask"></div>
+    <pre id="infoOpenMask"></pre>
+    <div id="statusMetaMask"></div>
+    <pre id="infoMetaMask"></pre>
+
+    <script>
+        // Функция для проверки наличия OpenMask
+        const checkOpenMask = () => {
+            return window.ton ? window.ton : null;
+        };
+
+        // Функция для проверки наличия MetaMask
+        const checkMetaMask = () => {
+            return window.ethereum ? window.ethereum : null;
+        };
+
+        // Функция для подключения к OpenMask
+        const connectOpenMask = async () => {
+            const provider = checkOpenMask();
+
+            if (!provider) {
+                console.error('OpenMask не обнаружен. Установите его.');
+                document.getElementById('statusOpenMask').innerText = 'OpenMask не обнаружен. Установите его.';
+                document.getElementById('infoOpenMask').innerText = 'Нет данных о OpenMask';
+                return;
+            }
+
+            try {
+                const accounts = await provider.send('ton_requestAccounts');
+                document.getElementById('statusOpenMask').innerText = `Подключено к OpenMask: ${accounts[0]}`;
+                console.log('Аккаунт OpenMask:', accounts[0]);
+
+                let network;
+                try {
+                    network = await provider.send('ton_getNetwork');
+                } catch (networkError) {
+                    console.warn('ton_getNetwork не поддерживается:', networkError);
+                    network = 'Неизвестно (метод не поддерживается)';
+                }
+
+                const info = {
+                    accounts,
+                    network,
+                    version: provider.version || 'Неизвестно',
+                };
+                document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
+                console.log('Информация о OpenMask:', info);
+
+                const TonWeb = window.TonWeb;
+                const tonweb = new TonWeb(provider);
+                console.log('TonWeb инициализирован:', tonweb);
+            } catch (error) {
+                console.error('Ошибка при подключении к OpenMask:', error);
+                document.getElementById('statusOpenMask').innerText = 'Ошибка подключения к OpenMask.';
+                document.getElementById('infoOpenMask').innerText = `Ошибка: ${error.message}`;
+            }
+        };
+
+        // Функция для подключения к MetaMask
+        const connectMetaMask = async () => {
+            const provider = checkMetaMask();
+
+            if (!provider) {
+                console.error('MetaMask не обнаружен. Установите его.');
+                document.getElementById('statusMetaMask').innerText = 'MetaMask не обнаружен. Установите его.';
+                document.getElementById('infoMetaMask').innerText = 'Нет данных о MetaMask';
+                return;
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                document.getElementById('statusMetaMask').innerText = `Подключено к MetaMask: ${accounts[0]}`;
+                console.log('Аккаунт MetaMask:', accounts[0]);
+
+                const networkId = await provider.request({ method: 'net_version' });
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                const info = {
+                    accounts,
+                    networkId,
+                    chainId,
+                    isMetaMask: provider.isMetaMask || false,
+                };
+                document.getElementById('infoMetaMask').innerText = JSON.stringify(info, null, 2);
+                console.log('Информация о MetaMask:', info);
+            } catch (error) {
+                console.error('Ошибка при подключении к MetaMask:', error);
+                document.getElementById('statusMetaMask').innerText = 'Ошибка подключения к MetaMask.';
+                document.getElementById('infoMetaMask').innerText = `Ошибка: ${error.message}`;
+            }
+        };
+
+        // Автоматически подключаемся к OpenMask и MetaMask при загрузке страницы
+        window.onload = () => {
+            connectOpenMask();  // Попытка подключения к OpenMask
+            connectMetaMask();  // Попытка подключения к MetaMask
+        };
+    </script>
+</body>
+</html>
