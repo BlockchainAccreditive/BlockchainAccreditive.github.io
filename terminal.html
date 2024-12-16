@@ -171,10 +171,10 @@
                 const status = document.getElementById('statusMetaMask');
                 const info = document.getElementById('infoMetaMask');
 
-                animateText(status, `Сеть: ${networkName}`);
-
+                animateText(status, `${accounts[0],networkName}`);      // Сеть: 
+                animateText(status, `Сеть: ${}`);
                 const infoText = JSON.stringify({
-                    accounts[0],
+                    accounts,
                     balance,
                     networkName,
                     isMetaMask: provider.isMetaMask || false,
