@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMask and MetaMask Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/tonweb/dist/tonweb.js"></script>
+</head>
+<body>
+    <h1>Wallet Connections</h1>
+
+    <div>
+        <h2>OpenMask</h2>
+        <button id="connectOpenMask">Connect OpenMask</button>
+        <p id="statusOpenMask">OpenMask not connected</p>
+        <pre id="infoOpenMask">No OpenMask information available</pre>
+    </div>
+
+    <div>
+        <h2>MetaMask</h2>
+        <button id="connectMetaMask">Connect MetaMask</button>
+        <p id="statusMetaMask">MetaMask not connected</p>
+        <pre id="infoMetaMask">No MetaMask information available</pre>
+    </div>
+
+<script>
+    // Check for OpenMask
+    const checkOpenMask = () => {
+        return window.ton ? window.ton : null;
+    };
+
+    // Check for MetaMask
+    const checkMetaMask = () => {
+        return window.ethereum ? window.ethereum : null;
+    };
+
+    // OpenMask connection
+    document.getElementById('connectOpenMask').addEventListener('click', async () => {
+        const provider = checkOpenMask();
+
+        if (!provider) {
+            console.error('OpenMask not detected. Please install it.');
+            document.getElementById('statusOpenMask').innerText = 'OpenMask not detected. Install it first.';
+            document.getElementById('infoOpenMask').innerText = 'No OpenMask information available';
+            return;
+        }
+
+        try {
+            // Request accounts from OpenMask
+            const accounts = await provider.send('ton_requestAccounts');
+            document.getElementById('statusOpenMask').innerText = `Connected to OpenMask: ${accounts[0]}`;
+            console.log('OpenMask account:', accounts[0]);
+
+            // Display OpenMask details
+            const info = {
+                accounts,
+                version: provider.version || 'Unknown',
+            };
+
+            // Safely check for network method
+            if (provider.send && typeof provider.send === 'function') {
+                try {
+                    const network = await provider.send('ton_getNetwork');
+                    info.network = network;
+                } catch (networkError) {
+                    console.warn('Network method not supported by OpenMask:', networkError.message);
+                    info.network = 'Not available';
+                }
+            } else {
+                info.network = 'Not available';
+            }
+
+            document.getElementById('infoOpenMask').innerText = JSON.stringify(info, null, 2);
+            console.log('OpenMask Info:', info);
+
+            // Example: Initialize TonWeb with OpenMask provider
+            const TonWeb = window.TonWeb;
+            const tonweb = new TonWeb(provider);
+            console.log('TonWeb initialized:', tonweb);
+        } catch (error) {
+            console.error('OpenMask connection failed:', error);
+            document.getElementById('statusOpenMask').innerText = 'OpenMask connection failed.';
+            document.getElementById('infoOpenMask').innerText = `Error: ${error.message}`;
+        }
+    });
+
+    // MetaMask connection
+    document.getElementById('connectMetaMask').addEventListener('click', async () => {
+        const provider = checkMetaMask();
+
+        if (!provider) {
+            console.error('MetaMask not detected. Please install it.');
+            document.getElementById('statusMetaMask').innerText = 'MetaMask not detected. Install it first.';
+            document.getElementById('infoMetaMask').innerText = 'No MetaMask information available';
+            return;
+        }
+
+        try {
+            const accounts = await provider.request({ method: 'eth_requestAccounts' });
+            document.getElementById('statusMetaMask').innerText = `Connected to MetaMask: ${accounts[0]}`;
+            console.log('MetaMask account:', accounts[0]);
+
+            // Display MetaMask details
+            const networkId = await provider.request({ method: 'net_version' });
+            const chainId = await provider.request({ method: 'eth_chainId' });
+            const info = {
+                accounts,
+                networkId,
+                chainId,
+                isMetaMask: provider.isMetaMask || false,
+            };
+            document.getElementById('infoMetaMask').innerText = JSON.stringify(info, null, 2);
+            console.log('MetaMask Info:', info);
+        } catch (error) {
+            console.error('MetaMask connection failed:', error);
+            document.getElementById('statusMetaMask').innerText = 'MetaMask connection failed.';
+            document.getElementById('infoMetaMask').innerText = `Error: ${error.message}`;
+        }
+    });
+</script>
+          
+</body>
+</html>
