@@ -8,54 +8,63 @@
 </head>
 <body>
     <h1>Connect to Wallet</h1>
-    <button id="connectButton">Connect Wallet</button>
+    <button id="connectOpenMask">Connect OpenMask</button>
+    <button id="connectMetaMask">Connect MetaMask</button>
     <p id="status">Wallet not connected</p>
 
     <script>
-        // Initialize provider for OpenMask and MetaMask
-        const getProvider = () => {
-            if (window.ethereum) {
-                return window.ethereum; // MetaMask or Ethereum-based wallets
-            } else if (window.ton) {
-                return window.ton; // OpenMask wallet
-            }
-            return null;
+        // Check for OpenMask
+        const checkOpenMask = () => {
+            return window.ton ? window.ton : null;
         };
 
-        document.getElementById('connectButton').addEventListener('click', async () => {
-            const provider = getProvider();
+        // Check for MetaMask
+        const checkMetaMask = () => {
+            return window.ethereum ? window.ethereum : null;
+        };
+
+        // OpenMask connection
+        document.getElementById('connectOpenMask').addEventListener('click', async () => {
+            const provider = checkOpenMask();
 
             if (!provider) {
-                console.error('No wallet detected. Please install OpenMask or MetaMask.');
-                document.getElementById('status').innerText = 'No wallet detected. Install OpenMask or MetaMask.';
+                console.error('OpenMask not detected. Please install it.');
+                document.getElementById('status').innerText = 'OpenMask not detected. Install it first.';
                 return;
             }
 
-            if (provider === window.ethereum) {
-                // MetaMask integration
-                try {
-                    const accounts = await provider.request({ method: 'eth_requestAccounts' });
-                    document.getElementById('status').innerText = `Connected to MetaMask: ${accounts[0]}`;
-                    console.log('MetaMask account:', accounts[0]);
-                } catch (error) {
-                    console.error('MetaMask connection failed:', error);
-                    document.getElementById('status').innerText = 'MetaMask connection failed.';
-                }
-            } else if (provider === window.ton) {
-                // OpenMask integration
-                try {
-                    const accounts = await provider.send('ton_requestAccounts');
-                    document.getElementById('status').innerText = `Connected to OpenMask: ${accounts[0]}`;
-                    console.log('OpenMask account:', accounts[0]);
+            try {
+                const accounts = await provider.send('ton_requestAccounts');
+                document.getElementById('status').innerText = `Connected to OpenMask: ${accounts[0]}`;
+                console.log('OpenMask account:', accounts[0]);
 
-                    // Example: Initialize TonWeb with OpenMask provider
-                    const TonWeb = window.TonWeb;
-                    const tonweb = new TonWeb(provider);
-                    console.log('TonWeb initialized:', tonweb);
-                } catch (error) {
-                    console.error('OpenMask connection failed:', error);
-                    document.getElementById('status').innerText = 'OpenMask connection failed.';
-                }
+                // Example: Initialize TonWeb with OpenMask provider
+                const TonWeb = window.TonWeb;
+                const tonweb = new TonWeb(provider);
+                console.log('TonWeb initialized:', tonweb);
+            } catch (error) {
+                console.error('OpenMask connection failed:', error);
+                document.getElementById('status').innerText = 'OpenMask connection failed.';
+            }
+        });
+
+        // MetaMask connection
+        document.getElementById('connectMetaMask').addEventListener('click', async () => {
+            const provider = checkMetaMask();
+
+            if (!provider) {
+                console.error('MetaMask not detected. Please install it.');
+                document.getElementById('status').innerText = 'MetaMask not detected. Install it first.';
+                return;
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                document.getElementById('status').innerText = `Connected to MetaMask: ${accounts[0]}`;
+                console.log('MetaMask account:', accounts[0]);
+            } catch (error) {
+                console.error('MetaMask connection failed:', error);
+                document.getElementById('status').innerText = 'MetaMask connection failed.';
             }
         });
     </script>
