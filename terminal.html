@@ -172,12 +172,17 @@
                 const info = document.getElementById('infoMetaMask');
 
                 animateText(status, `${accounts[0],networkName}`);      // Сеть: 
+                const infoText = accounts[0]+'<br>'+ balance +'<br>'+networkName;
+                
+                /*    isMetaMask: provider.isMetaMask || false,
+                }, null, 2);
+
                 const infoText = JSON.stringify({
                     accounts,
                     balance,
                     networkName,
                     isMetaMask: provider.isMetaMask || false,
-                }, null, 2);
+                }, null, 2);*/
 
                 animateText(info, infoText);
                 console.log('Информация о MetaMask:', infoText);
