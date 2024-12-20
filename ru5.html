@@ -197,6 +197,19 @@
                             }
                         }
                     },
+
+  options: {
+    plugins: {  // 'legend' now within object 'plugins {}'
+      legend: {
+        labels: {
+          color: "transparent",  // not 'fontColor:' anymore
+          // fontSize: 18  // not 'fontSize:' anymore
+          font: {
+            size: 18 // 'size' now within object 'font {}'
+          }
+        }
+      }
+    },
                     // Установка белого цвета для label графика
                     elements: {
                         legend: {
