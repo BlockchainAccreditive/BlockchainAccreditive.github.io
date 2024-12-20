@@ -106,8 +106,9 @@
                 const balanceInEth = web3.utils.fromWei(balanceInWei, 'ether');
 
                 // Получаем курс Ethereum в рублях с API CoinGecko
-                const priceData = await fetch('https://api.allorigins.win/raw?url=https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=rub');
-                const priceJson = await priceData.json();
+                // const priceData = await fetch('https://api.allorigins.win/raw?url=https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=rub');
+const priceData = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=rub');                
+const priceJson = await priceData.json();
                 const ethToRub = priceJson.ethereum.rub;
 
                 // Рассчитываем баланс в рублях
