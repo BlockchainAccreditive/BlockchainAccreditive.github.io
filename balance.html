@@ -94,7 +94,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
     // Проверяем, подключен ли MetaMask
     if (typeof window.ethereum !== 'undefined') {
         const web3 = new Web3(window.ethereum);
@@ -168,9 +168,10 @@
                             color: '#fff'
                         }
                     },
-legend: {
-    display: false,  // Полностью скрыть легенду
-},
+                    legend: {
+                        display: false,  // Полностью скрыть легенду
+                    }
+                },
                 scales: {
                     x: {
                         type: 'time',
