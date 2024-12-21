@@ -121,6 +121,14 @@
 
             // Отображаем баланс с пробелами и символом рубля
             document.getElementById('balance').innerText = `${formattedBalance} ₽`;
+        }
+
+        // Функция для обновления графика
+        async function updateChart() {
+            // Получаем курс Ethereum в рублях с API CoinGecko
+            const priceData = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=rub');
+            const priceJson = await priceData.json();
+            const ethToRub = priceJson.ethereum.rub;
 
             // Обновляем график
             const currentTime = new Date();
@@ -214,9 +222,13 @@
             }
         });
 
-        // Обновляем баланс и курс каждые 30 секунд
-        setInterval(getBalanceAndUpdate, 30000);
+        // Обновляем баланс каждые 3 секунды
+        setInterval(getBalanceAndUpdate, 3000);
         getBalanceAndUpdate(); // Выполняем сразу при загрузке страницы
+
+        // Обновляем график каждые 30 секунд
+        setInterval(updateChart, 30000);
+        updateChart(); // Выполняем сразу при загрузке страницы
 
     } else {
         alert("MetaMask не установлен!");
