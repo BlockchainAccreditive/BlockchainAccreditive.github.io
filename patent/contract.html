@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экспортно-импортный контракт</title>
+    <style>
+        body{font-family: Arial, sans-serif;font-family: monospace;margin: 0;padding: 0;background-color: #000000;color: #333;}
+        .container {max-width: 900px;margin: 30px auto;padding: 20px;background: #000;border-radius: 8px;box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);}
+        .header {display: flex;justify-content: space-between;align-items: flex-start;padding: 0px 0;border-bottom:5px solid #34b3e7;font-size: 22px;line-height: 25px;}
+        .inn1, .kpp1 {position: relative;left: 12px;font-weight: 500;}
+        .ogrn1 {position: relative;font-weight: 500;}
+        .header-left, .header-right {width: 50%;}
+        .header-left p, .header-right p {margin: 5px 0;}
+        .header-left {text-align: left;color:#34b3e7;}
+        .header-right {text-align: right;color:#34b3e7;}
+        .section {margin: 20px 0;}
+        .section h2 {color: white;font-size: 18px;padding: 10px;margin: 0;border-radius: 5px;background-color: #34b3e7;cursor: pointer;transition: background-color 0.3s ease, color 0.3s ease;}
+        .section h2.open {background-color: #a06bff;color: #fff;border-radius: 5px 5px 5px 5px;}
+        .details {max-height: 0;overflow: hidden;padding: 0 10px;background-color: #000;border-left: 3px solid #ccc;border-left: 3px solid black;transition: max-height 0.5s ease, padding 0.3s ease;}
+        .details.open {max-height: 500px;padding: 10px; color: #ffffff;}
+        .details p {margin: 5px 0;}
+        .signature {margin-top: 30px;display: flex;justify-content: space-between;background-size: contain;background-position: center;background-repeat: no-repeat;/*height: 333px;*/}
+        .signature div {text-align: center;opacity: 1;position: relative;top: -20px;line-height: 10px;text-transform: uppercase;color: #a06bff;font-weight: 900;}
+        .signature strong {text-transform: uppercase;color: #34b3e7;}
+        .footer {text-align: center;font-size: 14px;color: #666;color: #34b3e7;font-weight: 900;}
+        span#companyName,#companyName1 {text-transform: uppercase;}
+        span#companyName1 {text-transform: uppercase;position: relative;left: 12px;}
+        strong {color:#34b3e7;}a {color:#34b3e7;text-decoration:none;font-weight:900;}
+        a {color: #34b3e7;text-decoration: none;font-weight: 900;}::-webkit-scrollbar {width: 0px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <p><strong id="law"></strong> «<span id="companyName"></span>»</p>
+                <p><strong id="law1"></strong> <span id="companyName1"></span></p>
+                <div id="docsNumbers" style="line-height: 15px;font-weight: 900;padding: 20px 0;">
+                    <p class="result" id="ogrn">ОГРН: —</p>
+                    <p class="result" id="kpp">КПП: —</p>
+                    <p class="result" id="inn">ИНН: —</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <p><strong> </strong> <span id="Place">США</span></p>
+                <p><strong>НОМЕР ДОКУМЕНТА (ID): </strong> <span id="docNumber">EIC-2024-0002</span></p>
+                <p><strong>ДАТА:</strong> <span class="today"></span></p>
+            </div>
+        </div>
+
+        <!--<h1 style="text-align:center;">Экспортно - импортный контракт</h1>-->
+
+        <div class="section">
+            <h2 onclick="toggleDetails('contract-parties', this)">Стороны контракта</h2>
+            <div id="contract-parties" class="details">
+                <p><strong>Экспортёр:</strong> LLC «TRUSTED PARTNERS»</p>
+                <p><strong>Адрес:</strong> 123 Грин Лейн, Спрингфилд, США</p>
+                <p><strong>Цифровой идентификатор:</strong> ABC86121KX</p>
+                <br>
+                <p><strong>Импортёр:</strong> «GLOBAL TRADE SOLUTIONS»</p>
+                <p><strong>Адрес:</strong> 789 Африка Трейд Авеню, Лагос, Нигерия</p>
+                <p><strong>Цифровой идентификатор:</strong> GTS67890KX</p>
+                <br>
+                <p><strong>Банк:</strong> «JPMorgan Chase & Co»</p>
+                <p><strong>Адрес:</strong> 383 Madison Avenue, New York, New York, 10017.</p>
+                <p><strong>Цифровой идентификатор:</strong> QYX52559WU</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 onclick="toggleDetails('contract-details', this)">Детали контракта</h2>
+            <div id="contract-details" class="details">
+                <p><strong>Описание товара:</strong> 10,000 тонн пшеницы</p>
+                <p><strong>Условия поставки:</strong> FOB (Free on Board) порт Новый Орлеан</p>
+                <p><strong>Дата поставки:</strong> 25 февраля 2024 года</p>
+                <p><strong>Общая стоимость контракта:</strong> 2,000,000 USD (токенизировано через CBDC)</p>
+                <p><strong>Метод оплаты:</strong> Цифровая валюта центрального банка (CBDC) через Onyx Digital Assets</p>
+                <p><strong>Полный текст документа:</strong> <a href="#">скачать</a></p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 onclick="toggleDetails('api-integration', this)">API Интеграция (/)</h2>
+            <div id="api-integration" class="details">
+                <p><strong>API регистрации контракта:</strong> Регистрация контракта на платформе Kinexys</p>
+                <p><strong>API токенизации:</strong> Управление выпуском токенов и их распределением</p>
+                <p><strong>API расчётов:</strong> Автоматизация расчётов через CBDC</p>
+                <p><strong>API контроля выполнения:</strong> Отслеживание статуса сделки, автоматизация уведомлений</p>
+                <p><strong>API управления рисками:</strong> Активация страхового покрытия</p>
+            </div>
+        </div>
+
+        <div class="signature">
+           <!--<img src="https://webtel.in/Images/bulk-signing-solution.png" style="z-index: 6786867;left: 37%;position: absolute;width: 28%;top: 45%;">
+            <iframe src="dist/index.html" style="border: 0;width: 91%;position: absolute;opacity: .25;top: 48%;left: 5%;height: 30vh;"></iframe>-->
+            <div>
+                <p><strong>Экспортёр:</strong></p>
+                <p>Цифровая подпись: <a href="#">ABC12345SIGN</a></p>
+            </div>
+            <div>
+                <p><strong>Импортёр:</strong></p>
+                <p>Цифровая подпись: <a href="#">GTS67890SIGN</a></p>
+            </div>
+            <div>
+                <p><strong>Банк:</strong></p>
+                <p>Цифровая подпись: <a href="#">CB654435SIGN</a></p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Платформа токенизации экспортно-импортных контрактов</p>
+            <p>Создано с использованием <span style="color: #a06bff;">Onyx Digital Assets®</span>, <span style="color: #a06bff;">CBDC®</span> и <span style="color: #a06bff;">Kinexys Blockchain Platform®</span></p>
+        </div>
+    </div>
+<script>
+            // Автоматическая генерация при загрузке страницы
+        
+        function formatDate(date) {
+            const months = [
+                "января", "февраля", "марта", "апреля", "мая", "июня", 
+                "июля", "августа", "сентября", "октября", "ноября", "декабря"
+            ];
+            
+            const day = date.getDate();
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+
+            return `${day} ${month} ${year} года`;
+        }
+
+        document.querySelector('.today').textContent = formatDate(new Date());
+function toggleDetails(sectionId, headerElement) {
+        const section = document.getElementById(sectionId);
+        
+        if (section) {
+            const isOpen = section.classList.contains('open');
+            section.classList.toggle('open', !isOpen);
+            headerElement.classList.toggle('open', !isOpen);
+        }
+    }
+function updateCompanyInfo() {
+    const companyNameElement = document.getElementById('companyName');
+    const companyNameText = companyNameElement.textContent || "";
+
+    const placeElement = document.getElementById('Place');
+    const docsNumbersElement = document.getElementById('docsNumbers');
+    const lawElement = document.getElementById('law');
+    const lawElement1 = document.getElementById('law1');
+
+    const isLatin = /[a-zA-Z]/.test(companyNameText);
+
+    if (isLatin) {
+        const countries = ['USA', 'CHINA', 'UK', 'GHANA', 'KENYA', 'NIGERIA'];
+        const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+        placeElement.textContent = randomCountry;
+
+        docsNumbersElement.innerHTML = `
+            <p class="result" id="ein">EIN (TIN): ${generateEin()}</p>
+            <p class="result" id="registration">Certificate: ${generateRegistrationNumber()}</p>
+        `;
+        const companyTypes = [
+            "LLC (Limited liability company)",
+            "LLP (Limited Liability Partnership)",
+            "INC. (Incorporated)",
+            "CORP. (Corporation)",
+            "PLC (Public Limited Company)",
+            "LTD. (Private Limited company)"
+        ];
+        const randomType = companyTypes[Math.floor(Math.random() * companyTypes.length)];
+
+        if (lawElement) lawElement.textContent = randomType.split(' ')[0];
+        if (lawElement1) lawElement1.textContent = randomType;
+    } else {
+        placeElement.textContent = "RUSSIA";
+        docsNumbersElement.innerHTML = `
+            <p class="result" id="ogrn">ОГРН: ${generateOgrn()}</p>
+            <p class="result" id="kpp">КПП: ${generateKpp()}</p>
+            <p class="result" id="inn">ИНН: ${generateInn()}</p>
+        `;
+        const russianCompanyTypes = [
+            "ООО (Общество с ограниченной ответственностью)",
+            "ИП (Индивидуальный предприниматель)",
+            "ПАО (Публичное акционерное общество)",
+            "АО (Акционерное общество)",
+            "НКО (Некоммерческая организация)",
+            "ГУП (Государственное унитарное предприятие)"
+        ];
+        const randomType = russianCompanyTypes[Math.floor(Math.random() * russianCompanyTypes.length)];
+        if (lawElement) lawElement.textContent = randomType.split(' ')[0];
+        if (lawElement1) lawElement1.textContent = randomType;
+    }
+}
+function generateEin() {
+    return Math.floor(100000000 + Math.random() * 900000000).toString();
+}
+function generateRegistrationNumber() {
+    return `RCN-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+function generateOgrn() {
+    return "1" + Math.floor(Math.random() * 9000000000000 + 1000000000000);
+}
+function generateKpp() {
+    return Math.floor(Math.random() * 900000000 + 100000000);
+}
+function generateInn() {
+    return Math.floor(Math.random() * 9000000000 + 1000000000);
+}
+
+// Установка случайного названия компании и обновление данных
+function setRandomPlatformName() {
+    const companyName = generateRandomName();
+    const companyNameElement = document.getElementById('companyName');
+
+    if (companyNameElement) {
+        companyNameElement.textContent = companyName;
+    }
+    updateCompanyInfo();
+}
+function generateRandomName() {
+    const platformNames = [
+    "ТокенИмпорт",
+    "ЭкспоТокен",
+    "ТокенТрейд",
+    "ИмпортТокен",
+    "ЭкспоТех",
+    "ТокенПорт",
+    "КонтрактТокен",
+    "ТокенКонтракт",
+    "TradeToken",
+    "ТокенГлобал",
+    "ТокенЭкспорт",
+    "ТрансТокен",
+    "TokenTrade",
+    "ГлобТокен",
+    "ТокенГейт",
+    "ТокенМаркет",
+    "ЭкспоChain",
+    "ТокенПлат",
+    "ТокенМост",
+    "КонтрактСет",
+    "ТрейдБлок",
+    "БлокТокен",
+    "ТокенСеть",
+    "ПортChain",
+    "ЭкспортМост",
+    "ИмпортChain",
+    "ГлобМаркет",
+    "КонтрактGate",
+    "МультиТокен",
+    "ГибридТокен",
+    "TradeLink",
+    "GlobalToken",
+    "BlockTrade",
+    "TokenBridge",
+    "ExportGate",
+    "ImportBlock",
+    "TradeConnect",
+    "ExportFlow",
+    "TokenWay",
+    "GlobalTradeChain",
+    "TokenPort",
+    "ContractLink",
+    "HybridTrade",
+    "TokenCross",
+    "TradeMesh",
+    "BridgeToken",
+    "FlowChain",
+    "TradeSphere",
+    "CrossChainToken",
+    "TransGlobal",
+    "InterTrade",
+    "FlexiTrade",
+    "TradeFusion",
+    "ChainExport",
+    "TokenSync",
+    "ConnectChain",
+    "PortGate",
+    "BlockLink",
+    "ImportMesh",
+    "HybridConnect",
+    "TradeFlex",
+    "EximToken",
+    "TransBridge",
+    "FusionChain",
+    "ExpImGate",
+    "GlobalExim",
+    "TokenNet",
+    "EximFlow",
+    "CrossTrade",
+    "PortBridge",
+    "ExpImLink",
+    "TradeGlobal",
+    "HybridLink",
+    "BridgeFlow",
+    "FlexiChain",
+    "EximMesh",
+    "ChainConnect",
+    "MultiTrade" 
+    ];
+    const randomIndex = Math.floor(Math.random() * platformNames.length);
+    return platformNames[randomIndex];
+}document.addEventListener('DOMContentLoaded', setRandomPlatformName);
+// BIN
+
+</script>
+</body>
+</html>
