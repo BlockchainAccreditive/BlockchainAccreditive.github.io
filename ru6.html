@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Баланс в Рублях</title>
+    <title>Баланс MetaMask в Рублях</title>
     <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Добавление адаптера для работы с датами -->
@@ -14,8 +14,6 @@
             font-family: monospace;
             font-weight: 900;
             background: #0f0f0f;
-            background: #262dac;
-            background: rgb(16 22 34);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -27,11 +25,8 @@
         .card {
             width: 350px;
             padding: 20px;
-            width: 50%;
-            height: 25%;
             border-radius: 15px;
             background: linear-gradient(135deg, #ff3100, #feb47b); /* Градиент */
-            background: rgb(16 22 34);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             color: #fff;
             text-align: center;
@@ -102,37 +97,48 @@
 
             // Функция для получения баланса и курса
             async function getBalanceAndUpdate() {
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                const account = accounts[0];
-                const balanceInWei = await web3.eth.getBalance(account);
-                const balanceInEth = web3.utils.fromWei(balanceInWei, 'ether');
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    const account = accounts[0];
+                    const balanceInWei = await web3.eth.getBalance(account);
+                    const balanceInEth = web3.utils.fromWei(balanceInWei, 'ether');
 
-                // Получаем курс Ethereum в рублях с API CoinGecko
-                const priceData = await fetch('https://api.allorigins.win/raw?url=https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=rub');
-                const priceJson = await priceData.json();
-                const ethToRub = priceJson.ethereum.rub;
+                    // Получаем курс Ethereum в рублях с API CoinGecko
+                    const priceData = await fetch('https://api.allorigins.win/raw?url=https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=rub');
+                    const priceJson = await priceData.json();
 
-                // Рассчитываем баланс в рублях
-                const balanceInRub = (balanceInEth * ethToRub).toFixed(2);
+                    // Проверяем, что данные получены корректно
+                    if (priceJson && priceJson.ethereum && priceJson.ethereum.rub) {
+                        const ethToRub = priceJson.ethereum.rub;
 
-                // Форматируем баланс с пробелами
-                const formattedBalance = new Intl.NumberFormat('ru-RU').format(balanceInRub);
-                document.getElementById('balance').innerText = `${formattedBalance} ₽`;
+                        // Рассчитываем баланс в рублях
+                        const balanceInRub = (balanceInEth * ethToRub).toFixed(2);
 
-                // Обновляем график
-                const currentTime = new Date();
-                timeHistory.push(currentTime);
-                priceHistory.push(ethToRub);
+                        // Форматируем баланс с пробелами
+                        const formattedBalance = new Intl.NumberFormat('ru-RU').format(balanceInRub);
+                        document.getElementById('balance').innerText = `${formattedBalance} ₽`;
 
-                if (timeHistory.length > 30) {
-                    // Ограничиваем количество точек на графике
-                    timeHistory.shift();
-                    priceHistory.shift();
+                        // Обновляем график
+                        const currentTime = new Date();
+                        timeHistory.push(currentTime);
+                        priceHistory.push(ethToRub);
+
+                        if (timeHistory.length > 30) {
+                            // Ограничиваем количество точек на графике
+                            timeHistory.shift();
+                            priceHistory.shift();
+                        }
+
+                        priceChart.data.labels = timeHistory;
+                        priceChart.data.datasets[0].data = priceHistory;
+                        priceChart.update();
+                    } else {
+                        throw new Error('Не удалось получить курс Ethereum к рублю');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при получении данных:', error);
+                    document.getElementById('balance').innerText = 'Ошибка при загрузке данных';
                 }
-
-                priceChart.data.labels = timeHistory;
-                priceChart.data.datasets[0].data = priceHistory;
-                priceChart.update();
             }
 
             // Настройка графика с помощью Chart.js
@@ -224,5 +230,6 @@
             alert("MetaMask не установлен!");
         }
     </script>
+
 </body>
 </html>
