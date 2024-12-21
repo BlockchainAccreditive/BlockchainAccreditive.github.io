@@ -168,16 +168,17 @@
                             color: '#fff'
                         }
                     },
-                    legend: {
-                        labels: {
-                        // color: '#fff',  // Белый цвет для метки
-                            color: 'transparent',  // Белый цвет для метки
-                            font: {
-                                size: 18 // Размер шрифта
-                            }
-                        }
-                    }
-                },
+                 legend: {
+                display: true,  // Показывать легенду
+                labels: {
+                    color: 'transparent',  // Цвет текста в легенде
+                    font: {
+                        size: 18 // Размер шрифта
+                    },
+                    usePointStyle: false,  // Отключаем квадратики в легенде
+                                    }
+                               }
+                           },
                 scales: {
                     x: {
                         type: 'time',
