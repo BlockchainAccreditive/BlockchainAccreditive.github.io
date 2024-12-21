@@ -1,0 +1,102 @@
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Bento Grid</title>
+  <style>
+    ::-webkit-scrollbar {width: 0px;}
+    body {
+      margin: 20px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 95vh;background-color:#1f1f1f;
+    /*background: linear-gradient(135deg, #e0eafc, #cfdef3);*/
+    }
+    iframe {
+    width: 100%;border:0;
+    height: 100%;border-radius: 15px;
+}
+    .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+    height: 95vh;
+    width: 100%;
+    max-width: 2560px;
+    padding: 20px;
+    border-radius: 15px;
+    }
+
+    .grid-item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      font-size: 1.2rem;
+      color: #ffffff;
+      font-family: monospace;
+      font-weight: 900;
+    }
+
+    .meta-card {
+      grid-column: span 2;
+      grid-row: span 1;
+      background: linear-gradient(145deg, #ffc7ab, #ff0006);
+      background-size: 100% 100%;
+    background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px;
+    background-image: radial-gradient(49% 81% at 45% 47%, #FFE20345 0%, #073AFF00 100%), radial-gradient(113% 91% at 17% -2%, #FF4900FF 1%, #FF000000 99%), radial-gradient(142% 91% at 83% 7%, #FFDB00FF 1%, #FF000000 99%), radial-gradient(142% 91% at -6% 74%, #FF0049FF 1%, #FF000000 99%), radial-gradient(142% 91% at 111% 84%, #FF7000FF 0%, #FF0000FF 100%);
+    }
+
+    .openmask-card {
+      grid-column: span 2;
+      grid-row: span 1;
+      background: linear-gradient(145deg, #7f7fd5, #86a8e7);
+      background-size: 100% 100%;
+    background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px;
+    background-image: radial-gradient(49% 81% at 45% 47%, #03A9F4 0%, #073AFF00 100%), radial-gradient(113% 91% at 17% -2%, #005cff 1%, #FF000000 99%), radial-gradient(142% 91% at 83% 7%, #03A9F4 1%, #FF000000 99%), radial-gradient(142% 91% at -6% 74%, #0026ff 1%, #FF000000 99%), radial-gradient(142% 91% at 111% 84%, #0019ff 0%, #008eff 100%);
+      
+    }
+
+    .smart-ide {
+      grid-column: span 1;
+      grid-row: span 4;
+      background: linear-gradient(145deg, #2b5876, #4e4376);
+    }
+
+    .tracking {
+      grid-column: span 2;
+      grid-row: span 2;
+      background: linear-gradient(145deg, #36d1dc, #5b86e5);
+    }
+
+    .blockchain-search {
+      grid-column: span 1;
+      grid-row: span 2;
+      background: linear-gradient(145deg, #11998e, #38ef7d);
+      background-image: linear-gradient(51deg, #00c65a 50%, #007d39 100%);
+    }
+
+    .api-integration {
+      grid-column: span 3;
+      grid-row: span 2;
+      background: linear-gradient(145deg, #ff9a9e, #fad0c4);
+    }
+  </style>
+</head>
+<body>
+  <div class="bento-grid">
+    <div class="grid-item meta-card">eth</div>
+    <div class="grid-item openmask-card">ton</div>
+    <div class="grid-item smart-ide"></div>
+    <div class="grid-item tracking">
+<iframe src="https://blockchainaccreditive.github.io/balance.html"></iframe>
+</div>
+    <div class="grid-item blockchain-search">Blockchain Search</div>
+    <div class="grid-item api-integration">API Integration</div>
+  </div>
+
+</body>
+</html>
