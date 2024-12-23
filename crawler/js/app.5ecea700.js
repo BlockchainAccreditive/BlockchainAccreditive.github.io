@@ -193,7 +193,7 @@
                             t.play()
                         }
                     }
-                }, [t._v("Enable Music")]), r("button", {
+                }, [t._v("Звук")]), r("button", {
                     directives: [{
                         name: "show",
                         rawName: "v-show",
@@ -327,7 +327,7 @@
                 var t = this,
                     n = t.$createElement,
                     r = t._self._c || n;
-                return r("ul", [r("li", [t._v("Shodan Platform running - usage information:")]), r("li", [t._v("Target: Internet")]), r("li", [t._v("Ports: 1,225")]), r("li", [t._v("Users: 2+ million")])])
+                return r("ul", [r("li", [t._v("Usage information:")]), r("li", [t._v("Target: Internet")]), r("li", [t._v("Ports: 1,225")]), r("li", [t._v("Users: 2+ million")])])
             }],
             A = e["a"].extend({
                 data: function() {
