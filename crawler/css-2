@@ -1,0 +1,18 @@
+﻿@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 400;
+  src: url(s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6BoWg2.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700;
+  src: url(s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1ny_CmBoWg2.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 900;
+  src: url(s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nysimBoWg2.ttf) format('truetype');
+}
