@@ -94,8 +94,8 @@
 0xbBc270Bf1c32137E24ECf656D7ba4351F6d5E018</div>
     <div class="grid-item openmask-card" style="font-size:3em;">UQBLlHsrHhc_0-2yqw0ssgiMnleSHxv9wKxk-K4CvNquJfPx</div>
     <div class="grid-item smart-ide">
-<iframe class="box1" src="https://blockchainaccreditive.github.io/crawler/index.html#/"></iframe>
-<iframe class="box2"  src="https://cepbep.github.io/$/map.html"></iframe>
+
+<iframe id="frame" src="https://cepbep.github.io/$/map.html"></iframe>
 </div>
     <div class="grid-item tracking">
   <iframe src="https://blockchainaccreditive.github.io/wallet.html"></iframe>
@@ -105,6 +105,20 @@
 <iframe src="https://blockchainaccreditive.github.io/leaflet.html"></iframe>
 </div>
   </div>
+
+  <script>
+    let currentUrl = 1; // 1 - первый URL, 2 - второй URL
+
+    document.getElementById('toggleUrlButton').addEventListener('click', function() {
+        if (currentUrl === 1) {
+            document.getElementById('frame').src = 'https://blockchainaccreditive.github.io/crawler/index.html';
+            currentUrl = 2;
+        } else {
+            document.getElementById('frame').src = 'https://cepbep.github.io/$/map.html';
+            currentUrl = 1;
+        }
+    });
+</script>
 
 </body>
 </html>
