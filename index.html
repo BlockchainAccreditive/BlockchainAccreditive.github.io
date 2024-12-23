@@ -107,14 +107,17 @@
   </div>
 
   <script>
-    let currentUrl = 1; // 1 - первый URL, 2 - второй URL
+    let currentUrl = 1; // 1 - первый URL, 2 - второй URL, 3 - третий URL
 
     document.getElementById('toggleUrlButton').addEventListener('click', function() {
         if (currentUrl === 1) {
-            document.getElementById('frame').src = 'https://blockchainaccreditive.github.io/crawler/index.html';
+            document.getElementById('myIframe').src = 'https://blockchainaccreditive.github.io/crawler/index.html';
             currentUrl = 2;
+        } else if (currentUrl === 2) {
+            document.getElementById('myIframe').src = 'https://remix.ethereum.org/';
+            currentUrl = 3;
         } else {
-            document.getElementById('frame').src = 'https://cepbep.github.io/$/map.html';
+            document.getElementById('myIframe').src = 'https://cepbep.github.io/$/map.html';
             currentUrl = 1;
         }
     });
