@@ -127,8 +127,8 @@
                     })
                 }))])]), r("main", [r("RetroLogo", {
                     attrs: {
-                        title: "Shodan",
-                        subtitle: "2000"
+                        title: "George",
+                        subtitle: "Kwa"
                     }
                 }), r("RetroAudio"), "mobile" !== t.$mq ? r("DigitalClock") : t._e(), "mobile" !== t.$mq ? r("ShodanStats") : t._e(), r("router-view")], 1)])
             },
