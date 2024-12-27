@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Price Calculator</title>
+  <style>  ::-webkit-scrollbar {width: 0px;}
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+    }
+    input {
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+    }
+    label {
+      font-weight: bold;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f4f4f9;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Token Price Calculator</h1>
+
+    <label for="assetValue">Initial Asset Value (USD):</label>
+    <input type="number" id="assetValue" placeholder="Enter asset value in USD" value="20000000">
+
+    <label for="ethInitialPrice">Initial ETH Price (USD):</label>
+    <input type="number" id="ethInitialPrice" placeholder="Enter initial ETH price in USD" value="3000">
+
+    <label for="ethCurrentPrice">Current ETH Price (USD):</label>
+    <input type="number" id="ethCurrentPrice" placeholder="Enter current ETH price in USD" value="3500">
+
+    <label for="tokenSupply">Total Token Supply:</label>
+    <input type="number" id="tokenSupply" placeholder="Enter total token supply" value="1000000">
+
+    <div class="result">
+      <p><strong>Initial Token Price (ETH):</strong> <span id="tokenInitialETH">-</span></p>
+      <p><strong>Current Token Price (USD):</strong> <span id="tokenCurrentUSD">-</span></p>
+
+      <img src="tk.png" style="width: 100%;border-radius: 7px;">
+
+
+    </div>
+  </div>
+
+  <script>
+    // Function to calculate token price
+    function calculateTokenPrice() {
+      // Get input values
+      const assetValue = parseFloat(document.getElementById('assetValue').value);
+      const ethInitialPrice = parseFloat(document.getElementById('ethInitialPrice').value);
+      const ethCurrentPrice = parseFloat(document.getElementById('ethCurrentPrice').value);
+      const tokenSupply = parseFloat(document.getElementById('tokenSupply').value);
+
+      // Ensure all inputs are valid
+      if (isNaN(assetValue) || isNaN(ethInitialPrice) || isNaN(ethCurrentPrice) || isNaN(tokenSupply) || tokenSupply <= 0) {
+        alert('Please enter valid values for all fields.');
+        return;
+      }
+
+      // Calculate initial token price in ETH
+      const tokenInitialETH = assetValue / (ethInitialPrice * tokenSupply);
+
+      // Calculate current token price in USD
+      const tokenCurrentUSD = tokenInitialETH * ethCurrentPrice;
+
+      // Update the results in the DOM
+      document.getElementById('tokenInitialETH').textContent = tokenInitialETH.toFixed(6) + ' ETH';
+      document.getElementById('tokenCurrentUSD').textContent = '$' + tokenCurrentUSD.toFixed(2);
+    }
+
+    // Attach event listeners to inputs for real-time updates
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', calculateTokenPrice);
+    });
+
+    // Initial calculation on page load
+    calculateTokenPrice();
+  </script>
+</body>
+</html>
