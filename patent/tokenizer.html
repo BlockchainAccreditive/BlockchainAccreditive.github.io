@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Токенизация Активов</title>
+    <style>
+        ::-webkit-scrollbar {width: 0px;}
+        body {color:white;font-family: Arial, sans-serif; background-color:rgb(16 22 34); padding: 20px;}
+        .container {
+            max-width: 600px; margin: 0 auto; background-color: rgb(16 22 34); padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 { text-align: center; color: #fff; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-size: 14px; color: #FFF;
+        }
+        .form-group input, .form-group select {
+            width: 95%; padding: 10px; margin-top: 5px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px;
+        }
+        .button {
+            width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;
+        }
+        .button:hover { background-color: #45a049; }
+        .token-list {
+            margin-top: 20px; max-height: 25vh; overflow-y: scroll;
+        }
+        .token {
+            background-color: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 5px;
+        }
+        .token-info { display: flex; justify-content: space-between; }
+        #viz { cursor: pointer; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 25px;
+        }
+        .close:hover, .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <center>
+        <img id="viz" src="diamond.png" style="width: 55%;border-radius: 10px;">
+    </center>
+    <h2>Токенизация Активов</h2>
+
+    <div class="form-group">
+        <label for="assetType">Тип Актива</label>
+        <select id="assetType" style="width: 98%;">
+            <option value="diamond">Бриллиант</option>
+            <option value="gold">Золото</option>
+            <option value="oil">Нефть</option>
+            <option value="grain">Зерно</option>
+            <option value="platinum">Платина</option>
+            <option value="realestate">Недвижимость</option>
+        </select>
+    </div>
+
+    <div class="form-group" id="assetWeightField" style="display: block;">
+        <label for="assetWeight">Масса/Количество</label>
+        <input type="number" id="assetWeight" placeholder="Введите массу или количество" required>
+    </div>
+
+    <div class="form-group" id="unitOfMeasurementField" style="display: block;">
+        <label for="unitOfMeasurement">Единица измерения</label>
+        <select id="unitOfMeasurement" style="width: 98%;">
+            <!-- Единицы измерения будут подстраиваться в зависимости от типа актива -->
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="assetValue">Рыночная Стоимость ($)</label>
+        <input type="number" id="assetValue" placeholder="Введите рыночную стоимость" required>
+    </div>
+
+    <div class="form-group" id="realEstateFields" style="display: none;">
+        <label for="propertyArea">Площадь (кв.м)</label>
+        <input type="number" id="propertyArea" placeholder="Введите площадь недвижимости в кв.м" required>
+    </div>
+
+    <div class="form-group" id="propertyTypeField" style="display: none;">
+        <label for="propertyType">Тип Недвижимости</label>
+        <select id="propertyType">
+            <option value="residential">Жилая</option>
+            <option value="commercial">Коммерческая</option>
+            <option value="land">Участок</option>
+            <option value="industrial">Промышленная</option>
+        </select>
+    </div>
+
+    <div class="form-group" id="propertyClassField" style="display: none;">
+        <label for="propertyClass">Класс Недвижимости</label>
+        <select id="propertyClass">
+            <option value="economy">Эконом</option>
+            <option value="comfort">Комфорт</option>
+            <option value="business">Бизнес</option>
+            <option value="premium">Премиум</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="tokenQuantity">Количество Токенов</label>
+        <input type="number" id="tokenQuantity" placeholder="Введите количество токенов" required min="1">
+    </div>
+
+    <button class="button" id="tokenizeButton">TOKENIZE</button>
+
+    <div class="token-list" id="tokenList">
+        <!-- Токены будут отображаться здесь -->
+    </div>
+
+    <div id="assetModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <p id="modalDescription"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Функция обновления единиц измерения в зависимости от типа актива
+    function updateUnitOfMeasurement(assetType) {
+        const unitSelect = document.getElementById("unitOfMeasurement");
+        unitSelect.innerHTML = "";  // Очистка старых значений
+
+        const unitOfMeasurementField = document.getElementById("unitOfMeasurementField");
+        const realEstateFields = document.getElementById("realEstateFields");
+        const propertyTypeField = document.getElementById("propertyTypeField");
+        const propertyClassField = document.getElementById("propertyClassField");
+        const assetWeightField = document.getElementById("assetWeightField");
+        const viz = document.getElementById("viz");
+        const modal = document.getElementById("assetModal");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalDescription = document.getElementById("modalDescription");
+
+        let units = [];
+        let assetName = "";
+        let assetDescription = "";
+
+        // Управление видимостью полей для недвижимости
+        if (assetType === "realestate") {
+            realEstateFields.style.display = "block";
+            propertyTypeField.style.display = "block";
+            propertyClassField.style.display = "block";
+            unitOfMeasurementField.style.display = "none"; // Скрываем выбор единиц измерения
+            assetWeightField.style.display = "none"; // Скрываем блок для массы/количества
+            viz.src = "realestate.png"; // Меняем изображение для недвижимости
+            viz.setAttribute("alt", "Недвижимость");
+
+            units = ["кв.м", "гектар"];
+            assetName = "Недвижимость";
+            assetDescription = "Эконом-класс. Самый доступный, распространённый и недорогой класс с минимальными базовыми опциями. Обычно жильё эконом-класса строится в значительно удалённых от центра спальных районах.";
+        } else {
+            realEstateFields.style.display = "none";
+            propertyTypeField.style.display = "none";
+            propertyClassField.style.display = "none";
+            unitOfMeasurementField.style.display = "block"; // Показываем выбор единиц измерения
+            assetWeightField.style.display = "block"; // Показываем блок для массы/количества
+
+            // Изменяем изображение в зависимости от типа актива
+            switch (assetType) {
+                case "diamond":
+                    viz.src = "diamond.png";
+                    viz.setAttribute("alt", "Алмазы");
+                    break;
+                case "gold":
+                    viz.src = "gold.png";
+                    viz.setAttribute("alt", "Золото");
+                    break;
+                case "oil":
+                    viz.src = "oil.png";
+                    viz.setAttribute("alt", "Нефть");
+                    break;
+                case "grain":
+                    viz.src = "grain.png";
+                    viz.setAttribute("alt", "Зерно");
+                    break;
+                case "platinum":
+                    viz.src = "platinum.png";
+                    viz.setAttribute("alt", "Платина");
+                    break;
+                default:
+                    viz.src = "";
+                    viz.setAttribute("alt", "");
+                    break;
+            }
+
+            // Определяем единицы измерения и описание актива
+            switch (assetType) {
+                case "diamond":
+                    units = ["граммы", "караты"];
+                    assetName = "Алмазы";
+                    assetDescription = "Алмазы — драгоценный камень, используемый в ювелирных изделиях.";
+                    break;
+                case "gold":
+                    units = ["унции", "граммы"];
+                    assetName = "Золото";
+                    assetDescription = "Золото — один из самых известных драгоценный металлов.";
+                    break;
+                case "oil":
+                    units = ["баррели", "литры"];
+                    assetName = "Нефть";
+                    assetDescription = "Нефть — важный энергетический ресурс.";
+                    break;
+                case "grain":
+                    units = ["тонны", "кг"];
+                    assetName = "Зерно";
+                    assetDescription = "Зерно — сельскохозяйственная продукция.";
+                    break;
+                case "platinum":
+                    units = ["унции", "граммы"];
+                    assetName = "Платина";
+                    assetDescription = "Платина — драгоценный металл.";
+                    break;
+                default:
+                    units = [];
+                    assetName = "";
+                    assetDescription = "";
+                    break;
+            }
+        }
+
+        // Обновление модального окна
+        modalTitle.textContent = assetName;
+        modalDescription.textContent = assetDescription;
+
+        // Обновление списка единиц измерения
+        units.forEach(unit => {
+            const option = document.createElement("option");
+            option.value = unit;
+            option.textContent = unit;
+            unitSelect.appendChild(option);
+        });
+    }
+
+    // Обработчик изменения типа актива
+    document.getElementById("assetType").addEventListener("change", function() {
+        const assetType = this.value;
+        updateUnitOfMeasurement(assetType);
+    });
+
+    // Начальная установка единиц измерения для выбранного актива
+    document.addEventListener("DOMContentLoaded", function() {
+        const assetType = document.getElementById("assetType").value;
+        updateUnitOfMeasurement(assetType);
+    });
+
+    // Обработчик нажатия на изображение для открытия модального окна
+    document.getElementById("viz").addEventListener("click", function() {
+        const modal = document.getElementById("assetModal");
+        modal.style.display = "block";
+    });
+
+    // Закрытие модального окна
+    document.getElementById("closeModal").addEventListener("click", function() {
+        const modal = document.getElementById("assetModal");
+        modal.style.display = "none";
+    });
+
+    // Закрытие модального окна при клике вне его
+    window.addEventListener("click", function(event) {
+        const modal = document.getElementById("assetModal");
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+
+    // Обработчик нажатия на кнопку "TOKENIZE"
+    document.getElementById("tokenizeButton").addEventListener("click", function() {
+        const assetWeight = parseFloat(document.getElementById("assetWeight").value);
+        const assetValue = parseFloat(document.getElementById("assetValue").value);
+        const tokenQuantity = parseInt(document.getElementById("tokenQuantity").value);
+        const tokenList = document.getElementById("tokenList");
+
+        if (isNaN(assetWeight) || isNaN(assetValue) || isNaN(tokenQuantity) || assetWeight <= 0 || assetValue <= 0 || tokenQuantity <= 0) {
+            alert("Пожалуйста, заполните все поля корректно!");
+            return;
+        }
+
+        // Рассчитываем стоимость одного токена
+        const tokenValue = assetValue / tokenQuantity;
+
+        // Получаем название актива
+        const assetType = document.getElementById("assetType").value;
+        const assetName = document.getElementById("assetType").selectedOptions[0].text;
+
+        // Получаем количество актива для отображения
+        const assetWeightPerToken = assetWeight / tokenQuantity;
+
+        // Очищаем старый список токенов
+        tokenList.innerHTML = '';
+
+        // Генерируем токены
+        for (let i = 0; i < tokenQuantity; i++) {
+            const token = document.createElement("div");
+            token.classList.add("token");
+
+            const tokenInfo = document.createElement("div");
+            tokenInfo.classList.add("token-info");
+
+            const tokenNumber = document.createElement("span");
+            tokenNumber.textContent = `${assetName}Сoin - Токен #${i + 1}`;
+
+            const tokenAmount = document.createElement("span");
+            tokenAmount.textContent = `$${tokenValue.toFixed(2)} USD`;
+
+            // Отображаем количество актива для токена
+            const assetQuantity = document.createElement("span");
+            assetQuantity.textContent = `Количество: ${assetWeightPerToken.toFixed(2)} ${document.getElementById("unitOfMeasurement").value}`;
+
+            tokenInfo.appendChild(tokenNumber);
+            tokenInfo.appendChild(tokenAmount);
+            tokenInfo.appendChild(assetQuantity);
+
+            token.appendChild(tokenInfo);
+            tokenList.appendChild(token);
+        }
+    });
+</script>
+</body>
+</html>
