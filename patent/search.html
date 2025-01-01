@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблица с поиском</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        input[type="text"] {
+            margin: 20px 0;
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Таблица категорий и методов</h1>
+
+<input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Поиск по таблице...">
+
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>№</th>
+            <th>Категория</th>
+            <th>Методы</th>
+            <th>Описание</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>Категория 1</td>
+            <td>Метод 1.1, Метод 1.2</td>
+            <td>Описание методов в категории 1.</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Категория 2</td>
+            <td>Метод 2.1, Метод 2.2</td>
+            <td>Описание методов в категории 2.</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Категория 3</td>
+            <td>Метод 3.1, Метод 3.2</td>
+            <td>Описание методов в категории 3.</td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    function searchTable() {
+        let input = document.getElementById("searchInput");
+        let filter = input.value.toLowerCase();
+        let table = document.getElementById("dataTable");
+        let rows = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < rows.length; i++) { // начинаем с 1, чтобы пропустить заголовок
+            let cells = rows[i].getElementsByTagName("td");
+            let found = false;
+            
+            for (let j = 0; j < cells.length; j++) {
+                let cell = cells[j];
+                if (cell.textContent.toLowerCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
