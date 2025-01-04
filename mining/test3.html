@@ -175,13 +175,13 @@
             // Включаем анимацию появления через 1 секунду
             setTimeout(() => {
                 stepElement.classList.add('step-enter-active');
-            }, step.delay * 1000);
+            }, step.delay * 3000); // Увеличиваем задержку для плавного появления
 
-            // Убираем шаг через 2 секунды (по завершении анимации)
+            // Шаг остаётся на экране 2 секунды, затем исчезает плавно
             setTimeout(() => {
                 stepElement.classList.remove('step-enter-active');
                 stepElement.classList.add('step-leave-active');
-            }, (step.delay + 1) * 1000);
+            }, (step.delay + 3) * 3000); // Увеличиваем время для каждого шага
         });
     }
 </script>
