@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Contract Visualizer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #contract-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #333;
+        }
+        #contract-visualization {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(255,255,255,0.1);
+        }
+        .node {
+            transition: all 0.3s ease;
+        }
+        .node:hover {
+            stroke-width: 4px;
+        }
+        .link {
+            stroke-width: 2px;
+            stroke-opacity: 0.7;
+        }
+        .node-label {
+            font-size: 10px;
+            fill: #ffffff;
+            font-family: 'Courier New', monospace;
+        }
+        #contract-info {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Smart Contract Visualizer</h1>
+
+    <!-- Поле ввода адреса контракта -->
+    <input 
+        type="text" 
+        id="contract-input" 
+        placeholder="Enter Contract Address"
+        value="0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984" 
+    >
+    <!-- Закомментированные адреса для тестирования -->
+    <!-- 
+    Uniswap: 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984
+    USDC: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+    DAI: 0x6B175474E89094C44Da98b954EedeAC495271d0F
+    WETH: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+    -->
+
+    <div id="contract-info">
+        <h2 id="contract-name">Contract Details</h2>
+        <p id="contract-address">Address: Not Selected</p>
+        <p id="contract-balance">Total Supply: N/A</p>
+        <p id="contract-functions">Functions: Loading...</p>
+    </div>
+
+    <svg id="contract-visualization" width="1200" height="700"></svg>
+
+    <script>
+        const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/b66dc23d66fd44efbdff14614c11ccb9');
+        const contractInput = document.getElementById('contract-input');
+        const contractInfoEl = document.getElementById('contract-info');
+
+        async function visualizeContract() {
+            const contractAddress = contractInput.value;
+            
+            try {
+                // Получаем ABI контракта
+                const contract = new ethers.Contract(contractAddress, [
+                    "function name() view returns (string)",
+                    "function symbol() view returns (string)",
+                    "function totalSupply() view returns (uint256)"
+                ], provider);
+
+                // Получаем базовую информацию
+                const name = await contract.name();
+                const symbol = await contract.symbol();
+                const totalSupply = await contract.totalSupply();
+
+                // Обновляем информацию о контракте
+                document.getElementById('contract-name').textContent = `${name} (${symbol})`;
+                document.getElementById('contract-address').textContent = `Address: ${contractAddress}`;
+                document.getElementById('contract-balance').textContent = `Total Supply: ${ethers.utils.formatUnits(totalSupply, 18)} ${symbol}`;
+
+                // Генерируем mock-данные для визуализации
+                const contractData = generateContractVisualization(name, symbol);
+                renderVisualization(contractData);
+
+            } catch (error) {
+                console.error("Ошибка при загрузке контракта:", error);
+                alert("Не удалось загрузить информацию о контракте");
+            }
+        }
+
+        function generateContractVisualization(name, symbol) {
+            return {
+                nodes: [
+                    { id: 1, name: "Transfer", type: "function", color: "#4CAF50" },
+                    { id: 2, name: "Balance", type: "view", color: "#2196F3" },
+                    { id: 3, name: "Approve", type: "function", color: "#FF9800" },
+                    { id: 4, name: "Mint", type: "admin", color: "#9C27B0" },
+                    { id: 5, name: "Burn", type: "admin", color: "#F44336" },
+                    { id: 6, name: `${name} Token`, type: "contract", color: "#FF5722" }
+                ],
+                links: [
+                    { source: 1, target: 2 },
+                    { source: 1, target: 6 },
+                    { source: 3, target: 6 },
+                    { source: 4, target: 6 },
+                    { source: 5, target: 6 }
+                ]
+            };
+        }
+
+        function renderVisualization(contractData) {
+            // Очищаем предыдущую визуализацию
+            d3.select("#contract-visualization").selectAll("*").remove();
+
+            const svg = d3.select("#contract-visualization");
+            const width = +svg.attr("width");
+            const height = +svg.attr("height");
+
+            const simulation = d3.forceSimulation(contractData.nodes)
+                .force("link", d3.forceLink(contractData.links).id(d => d.id))
+                .force("charge", d3.forceManyBody().strength(-500))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append("g")
+                .selectAll("line")
+                .data(contractData.links)
+                .enter()
+                .append("line")
+                .attr("class", "link")
+                .attr("stroke", "#555");
+
+            const node = svg.append("g")
+                .selectAll("circle")
+                .data(contractData.nodes)
+                .enter()
+                .append("circle")
+                .attr("class", "node")
+                .attr("r", 40)
+                .attr("fill", d => d.color)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            const labels = svg.append("g")
+                .selectAll("text")
+                .data(contractData.nodes)
+                .enter()
+                .append("text")
+                .text(d => d.name)
+                .attr("class", "node-label")
+                .attr("text-anchor", "middle");
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                labels
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+
+        // Первичная визуализация
+        renderVisualization(generateContractVisualization("Token", "TKN"));
+
+        // Обработчик изменения адреса
+        contractInput.addEventListener('change', visualizeContract);
+    </script>
+</body>
+</html>
