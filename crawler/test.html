@@ -6,7 +6,7 @@
     <title>Chat Bot</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: monospace;
             margin: 0;
             padding: 0;
             display: flex;
@@ -84,10 +84,11 @@
     <div id="sidebar">
         <h3>API Hosts</h3>
         <div id="hostList">
-            <div class="host-option" data-url="https://ethereum.gaia.domains/v1/chat/completions">https://ethereum.gaia.domains/v1/chat/completions</div>
+          <span>GAIA.AI</span>
+            <!--<div class="host-option" data-url="https://ethereum.gaia.domains/v1/chat/completions">https://ethereum.gaia.domains/v1/chat/completions</div>-->
         </div>
         <input type="text" id="newHostInput" placeholder="Add new host...">
-        <button id="addHostButton">Add Host</button>
+        <button id="addHostButton">Change Host</button>
     </div>
     <div style="flex: 1; display: flex; flex-direction: column;">
         <div id="chatContainer"></div>
