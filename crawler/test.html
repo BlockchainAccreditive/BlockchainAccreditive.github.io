@@ -10,8 +10,15 @@
             margin: 0;
             padding: 0;
             display: flex;
-            flex-direction: column;
             height: 100vh;
+        }
+        #sidebar {
+            width: 250px;
+            background-color: #f1f1f1;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
         #chatContainer {
             flex: 1;
@@ -60,19 +67,45 @@
         #sendButton:hover {
             background-color: #0056b3;
         }
+        .host-option {
+            margin: 5px 0;
+            padding: 5px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #fff;
+        }
+        .host-option:hover {
+            background-color: #e6e6e6;
+        }
     </style>
 </head>
 <body>
-    <div id="chatContainer"></div>
-    <div id="inputContainer">
-        <input type="text" id="userInput" placeholder="Type your message...">
-        <button id="sendButton">Send</button>
+    <div id="sidebar">
+        <h3>API Hosts</h3>
+        <div id="hostList">
+            <div class="host-option" data-url="https://ethereum.gaia.domains/v1/chat/completions">https://ethereum.gaia.domains/v1/chat/completions</div>
+        </div>
+        <input type="text" id="newHostInput" placeholder="Add new host...">
+        <button id="addHostButton">Add Host</button>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column;">
+        <div id="chatContainer"></div>
+        <div id="inputContainer">
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button id="sendButton">Send</button>
+        </div>
     </div>
 
     <script>
         const chatContainer = document.getElementById('chatContainer');
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
+        const hostList = document.getElementById('hostList');
+        const newHostInput = document.getElementById('newHostInput');
+        const addHostButton = document.getElementById('addHostButton');
+
+        let currentHost = 'https://ethereum.gaia.domains/v1/chat/completions';
 
         function addMessage(content, role) {
             const messageDiv = document.createElement('div');
@@ -82,6 +115,37 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
+        function updateHostSelection() {
+            const hostOptions = document.querySelectorAll('.host-option');
+            hostOptions.forEach(option => {
+                option.classList.remove('selected');
+                if (option.dataset.url === currentHost) {
+                    option.style.backgroundColor = '#d1e7ff';
+                } else {
+                    option.style.backgroundColor = '#fff';
+                }
+            });
+        }
+
+        hostList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('host-option')) {
+                currentHost = e.target.dataset.url;
+                updateHostSelection();
+            }
+        });
+
+        addHostButton.addEventListener('click', () => {
+            const newHost = newHostInput.value.trim();
+            if (newHost) {
+                const hostDiv = document.createElement('div');
+                hostDiv.classList.add('host-option');
+                hostDiv.dataset.url = newHost;
+                hostDiv.textContent = newHost;
+                hostList.appendChild(hostDiv);
+                newHostInput.value = '';
+            }
+        });
+
         async function sendMessage() {
             const userMessage = userInput.value.trim();
             if (!userMessage) return;
@@ -89,7 +153,6 @@
             addMessage(userMessage, 'user');
             userInput.value = '';
 
-            const url = 'https://ethereum.gaia.domains/v1/chat/completions';
             const headers = {
                 'accept': 'application/json',
                 'Content-Type': 'application/json'
@@ -102,7 +165,7 @@
             };
 
             try {
-                const response = await fetch(url, {
+                const response = await fetch(currentHost, {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify(data)
@@ -126,6 +189,8 @@
                 sendMessage();
             }
         });
+
+        updateHostSelection();
     </script>
 </body>
 </html>
