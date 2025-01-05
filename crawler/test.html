@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POST Request Example</title>
+</head>
+<body>
+    <h1>POST Request Example</h1>
+    <button id="sendRequest">Send Request</button>
+    <div id="response" style="margin-top: 20px;">
+        <h3>Response:</h3>
+        <pre id="responseContent"></pre>
+    </div>
+
+    <script>
+        document.getElementById('sendRequest').addEventListener('click', async () => {
+            const url = 'https://ethereum.gaia.domains/v1/chat/completions';
+            const headers = {
+                'accept': 'application/json',
+                'Content-Type': 'application/json'
+            };
+            const data = {
+                messages: [
+                    { role: "system", content: "You are a helpful assistant." },
+                    { role: "user", content: "Where is Paris?" }
+                ]
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('responseContent').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('responseContent').textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
