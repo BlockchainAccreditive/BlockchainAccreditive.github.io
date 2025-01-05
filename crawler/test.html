@@ -3,18 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POST Request Example</title>
+    <title>Chat Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #chatContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user {
+            align-self: flex-end;
+            background-color: #d1e7ff;
+        }
+        .assistant {
+            align-self: flex-start;
+            background-color: #e2e2e2;
+        }
+        #inputContainer {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+            background-color: #fff;
+        }
+        #userInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        #sendButton {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>POST Request Example</h1>
-    <button id="sendRequest">Send Request</button>
-    <div id="response" style="margin-top: 20px;">
-        <h3>Response:</h3>
-        <pre id="responseContent"></pre>
+    <div id="chatContainer"></div>
+    <div id="inputContainer">
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button id="sendButton">Send</button>
     </div>
 
     <script>
-        document.getElementById('sendRequest').addEventListener('click', async () => {
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+
+        function addMessage(content, role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role);
+            messageDiv.textContent = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (!userMessage) return;
+
+            addMessage(userMessage, 'user');
+            userInput.value = '';
+
             const url = 'https://ethereum.gaia.domains/v1/chat/completions';
             const headers = {
                 'accept': 'application/json',
@@ -23,7 +97,7 @@
             const data = {
                 messages: [
                     { role: "system", content: "You are a helpful assistant." },
-                    { role: "user", content: "Where is Paris?" }
+                    { role: "user", content: userMessage }
                 ]
             };
 
@@ -39,9 +113,17 @@
                 }
 
                 const result = await response.json();
-                document.getElementById('responseContent').textContent = JSON.stringify(result, null, 2);
+                const assistantMessage = result.choices[0]?.message?.content || "No response received.";
+                addMessage(assistantMessage, 'assistant');
             } catch (error) {
-                document.getElementById('responseContent').textContent = `Error: ${error.message}`;
+                addMessage(`Error: ${error.message}`, 'assistant');
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
         });
     </script>
