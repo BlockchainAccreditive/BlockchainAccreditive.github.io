@@ -86,14 +86,14 @@
 <body>
     <div id="sidebar">
         <a href="https://www.gaianet.ai/network-map" target="blank" style="text-decoration:unset;color:white;">
-        <h3 style="font-size:4em;text-align:center;">GAIA.AI</h3>
+        <h3 style="font-size:4em;text-align:center;margin:0;">GAIA.AI</h3>
         </a>
         <div id="hostList">
           <span></span>
             <!--<div class="host-option" data-url="https://ethereum.gaia.domains/v1/chat/completions">https://ethereum.gaia.domains/v1/chat/completions</div>-->
         </div>
-        <input type="text" id="newHostInput" placeholder="Add new host...">
-        <button id="addHostButton" style="padding: 5px;margin: 10px;">Set Host</button>
+        <input type="text" id="newHostInput" placeholder="Add new host..." style="position:relative;top:100px;padding:5px;">
+        <button id="addHostButton" style="padding: 5px;margin-top: 10px;position: relative;top: 100px;">Set Host</button>
     </div>
     <div style="flex: 1; display: flex; flex-direction: column;">
         <div id="chatContainer"></div>
