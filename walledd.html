@@ -101,9 +101,6 @@
         </div>
     </div>
 
-
-
-
 <script>
     // Проверяем, подключен ли MetaMask
     if (typeof window.ethereum !== 'undefined') {
@@ -133,8 +130,8 @@
             // Форматируем баланс с пробелами между тысячами
             const formattedBalance = new Intl.NumberFormat('ru-RU').format(balanceInRub);
 
-            // Отображаем баланс в формате (Баланс в Ξ) = (formattedBalance в ₽)
-            document.getElementById('balance').innerText = `(${balanceInEth} Ξ) = ${formattedBalance} ₽`;
+            // Отображаем баланс в формате (Баланс в Ξ) = (formattedBalance в ₽), сокращаем Ethereum до 4 знаков после точки
+            document.getElementById('balance').innerText = `${balanceInEth.toFixed(4)} Ξ = ${formattedBalance} ₽`;
 
             // Обновляем график
             const currentTime = new Date();
@@ -236,8 +233,6 @@
         alert("MetaMask не установлен!");
     }
 </script>
-
-
 
 </body>
 </html>
