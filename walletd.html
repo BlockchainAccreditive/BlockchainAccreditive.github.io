@@ -118,11 +118,17 @@
             const balanceInWei = await web3.eth.getBalance(account);
             const balanceInEth = web3.utils.fromWei(balanceInWei, 'ether');
 
-            // Установленный курс Ethereum в рублях (4650 рублей за 1 ETH)
-            const ethToRub = 4650;
+            // Установленный курс Ethereum в долларах (4650 USD за 1 ETH)
+            const ethToUsd = 4650;
+
+            // Получаем курс доллара к рублю с API (например, с API для курса валют)
+            const exchangeRateData = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+            const exchangeRateJson = await exchangeRateData.json();
+            const usdToRub = exchangeRateJson.rates.RUB;
 
             // Рассчитываем баланс в рублях
-            const balanceInRub = (balanceInEth * ethToRub).toFixed(2);
+            const balanceInUsd = (balanceInEth * ethToUsd).toFixed(2);  // Баланс в долларах
+            const balanceInRub = (balanceInUsd * usdToRub).toFixed(2);  // Конвертируем в рубли
 
             // Форматируем баланс с пробелами между тысячами
             const formattedBalance = new Intl.NumberFormat('ru-RU').format(balanceInRub);
@@ -133,7 +139,7 @@
             // Обновляем график
             const currentTime = new Date();
             timeHistory.push(currentTime);
-            priceHistory.push(ethToRub);
+            priceHistory.push(balanceInRub); // Используем рубли на графике
 
             if (timeHistory.length > 30) {
                 // Ограничиваем количество точек на графике
@@ -153,7 +159,7 @@
             data: {
                 labels: [],  // Временные метки
                 datasets: [{
-                    label: 'Курс ETH к рублю',
+                    label: 'Курс ETH в рублях',
                     data: [],  // Данные курса
                     borderColor: 'rgba(255, 255, 255, 1)',  /* Белая линия тренда */
                     fill: false,
@@ -230,5 +236,7 @@
         alert("MetaMask не установлен!");
     }
 </script>
+
+
 </body>
 </html>
