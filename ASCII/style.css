@@ -1,0 +1,93 @@
+/* Общие стили */
+body {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    background-color: #000000;
+    color: #00FF00;
+    font-size: 16px;
+}
+
+.dashboard {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.header, .console {
+    background-color: #0A0A0A;
+    padding: 10px;
+    color: #00FF00;
+}
+
+.header pre, .console pre {
+    margin: 0;
+}
+
+.main-content {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.section {
+    width: 48%;
+    background-color: #111111;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.section pre {
+    margin: 0;
+}
+
+section:hover {
+    background-color: #222222;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+}
+
+/* Прогресс-бар */
+.progress-bar {
+    display: block;
+    width: 100%;
+    height: 10px;
+    background-color: #333;
+}
+
+.progress-bar span {
+    display: block;
+    height: 100%;
+    background-color: #00FF00;
+    width: 0%;
+}
+
+/* Глитч-эффекты */
+@keyframes glitch {
+    0% { transform: translate(2px, -2px); }
+    50% { transform: translate(-2px, 2px); }
+    100% { transform: translate(2px, -2px); }
+}
+
+.glitch {
+    animation: glitch 0.5s infinite alternate;
+    color: #FF0000;
+}
+
+/* Анимация текста */
+.typing {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 3px solid #00FF00;
+    width: 0;
+    animation: typing 3s steps(40) 1s 1 normal both;
+}
+
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
