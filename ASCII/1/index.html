@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Cyber Terminal v1.0</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Terminal Header -->
+    <div id="header">
+        <pre class="glitch">
+╔════════════════════════════════════════════════════╗
+║ [SYSTEM]><span class="blink">■</span> STATUS: <span id="sysStatus">ONLINE</span> <span id="loadBar">██████████████████</span> <span id="loadPercent">98%</span> ║
+║ [IP: <span id="ip">192.168.0.1.0xFAKE</span>] [USER: root] [ACCESS: <span class="red-text">LEVEL 5</span>] ║
+╚════════════════════════════════════════════════════╝
+        </pre>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard">
+        <!-- Left Panel -->
+        <div class="panel left-panel">
+            <pre id="processes">
+╔══[ACTIVE PROCESSES]════════╗
+║ <span class="process">1. crypto_miner.exe   [32%] █▌</span> ║
+║ <span class="process">2. network_scanner.py [78%] ██</span> ║
+║ <span class="process">3. decryptor_v2       [▄▄▄▄]</span>   ║
+╚════════════════════════════╝
+            </pre>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="panel right-panel">
+            <pre id="network">
+╔══[NETWORK MAP]═════════════╗
+║ <span class="node">192.168.1.1 ──▓── ░░░░░ 45%</span> ║
+║ <span class="node">10.0.0.3     ──▓▓▓▓▓▓▓▓ 92%</span> ║
+║ <span class="node">          └─[UNKNOWN]</span>      ║
+╚════════════════════════════╝
+            </pre>
+        </div>
+    </div>
+
+    <!-- Console -->
+    <div id="console">
+        <pre>╔══[COMMAND_LINE]══════════════╗</pre>
+        <div id="output"></div>
+        <div class="input-line">
+            <span>> </span>
+            <input type="text" id="commandInput" autofocus>
+        </div>
+        <pre>╚══════════════════════════════╝</pre>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
