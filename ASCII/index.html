@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker Terminal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Интерфейс приложения -->
+    <div class="dashboard">
+        <header class="header">
+            <pre>
+╔══════════════════════════════════════════════════════════════╗
+║ [SYSTEM]> STATUS: ONLINE ████████████████ 98% LOAD           ║
+║ [IP: 192.168.0.1.0xFAKE] [USER: root] [ACCESS: LEVEL 5]      ║
+╚══════════════════════════════════════════════════════════════╝
+            </pre>
+        </header>
+
+        <div class="main-content">
+            <!-- Секция активных процессов -->
+            <div class="section" id="active-processes">
+                <pre>
+╔══[ACTIVE PROCESSES]════════════╗
+║ 1. crypto_miner.exe   [32%] █▌ ║
+║ 2. network_scanner.py [78%] ██ ║
+║ 3. decryptor_v2       [▄▄▄▄]   ║
+╚════════════════════════════════╝
+                </pre>
+            </div>
+
+            <!-- Секция карты сети -->
+            <div class="section" id="network-map">
+                <pre>
+╔══[NETWORK MAP]═════════════════╗
+║ 192.168.1.1 ──▓── ░░░░░ 45%    ║
+║ 10.0.0.3     ──▓▓▓▓▓▓▓▓ 92%    ║
+║               └─[UNKNOWN]      ║
+╚════════════════════════════════╝
+                </pre>
+            </div>
+        </div>
+
+        <!-- Консоль для ввода команд -->
+        <footer class="console">
+            <pre>
+╔══[COMMAND_LINE]══════════════════╗
+║ > scan --target 10.0.0.0/24      ║
+║ > [OK] 12 hosts found.           ║
+║ > _                               ║
+╚══════════════════════════════════╝
+            </pre>
+        </footer>
+    </div>
+
+    <!-- Подключаем JS -->
+    <script src="script.js"></script>
+</body>
+</html>
