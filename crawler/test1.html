@@ -311,99 +311,12 @@ terminalInput.addEventListener('keydown', function(e) {
     }
 });
 
-// ========== ГОЛОСОВОЙ ВВОД ==========
-let recognition;
-let voiceEqStream, voiceEqSource, voiceEqAnalyser, voiceEqData, voiceEqAnimId;
-function startVoiceEqualizer() {
-    if (voiceEqAnimId) cancelAnimationFrame(voiceEqAnimId);
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        voiceEqStream = stream;
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        voiceEqSource = ctx.createMediaStreamSource(stream);
-        voiceEqAnalyser = ctx.createAnalyser();
-        voiceEqAnalyser.fftSize = 64;
-        voiceEqData = new Uint8Array(voiceEqAnalyser.frequencyBinCount);
-        voiceEqSource.connect(voiceEqAnalyser);
-        function drawVoiceEq() {
-            eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
-            voiceEqAnalyser.getByteFrequencyData(voiceEqData);
-            for (let i = 0; i < voiceEqData.length; i++) {
-                const val = voiceEqData[i];
-                const x = i * (equalizerCanvas.width / voiceEqData.length);
-                const h = (val / 255) * equalizerCanvas.height;
-                eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
-                eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / voiceEqData.length) - 2, h);
-            }
-            voiceEqAnimId = requestAnimationFrame(drawVoiceEq);
-        }
-        drawVoiceEq();
-    }).catch(() => {
-        eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
-        eqCtx.fillStyle = '#ff0033';
-        eqCtx.font = '16px JetBrains Mono, monospace';
-        eqCtx.fillText('Микрофон не доступен', 20, 40);
-    });
-}
-function stopVoiceEqualizer() {
-    if (voiceEqAnimId) cancelAnimationFrame(voiceEqAnimId);
-    if (voiceEqStream) {
-        voiceEqStream.getTracks().forEach(track => track.stop());
-        voiceEqStream = null;
-    }
-    eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
-}
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'ru-RU';
-    recognition.interimResults = false;
-    recognition.continuous = false;
-
-    recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        terminalInput.value = transcript;
-        addTerminalLine('Голосовой ввод: ' + transcript);
-    };
-    recognition.onstart = function() {
-        isRecording = true;
-        voiceBtn.classList.add('active');
-        addTerminalLine('Голосовой ввод: старт');
-        startVoiceEqualizer();
-    };
-    recognition.onend = function() {
-        isRecording = false;
-        voiceBtn.classList.remove('active');
-        addTerminalLine('Голосовой ввод: завершён');
-        stopVoiceEqualizer();
-    };
-    recognition.onerror = function(e) {
-        addTerminalLine('Ошибка голосового ввода: ' + e.error);
-        stopVoiceEqualizer();
-    };
-
-    voiceBtn.addEventListener('click', function() {
-        if (isRecording) {
-            recognition.stop();
-        } else {
-            try {
-                recognition.start();
-            } catch (err) {
-                addTerminalLine('Ошибка запуска голосового ввода: ' + err.message);
-            }
-        }
-    });
-} else {
-    voiceBtn.disabled = true;
-    voiceBtn.title = 'Голосовой ввод не поддерживается';
-    addTerminalLine('Голосовой ввод не поддерживается этим браузером');
-}
-
 // ========== ЭКВАЛАЙЗЕР (Web Audio API) ==========
 const equalizerCanvas = document.getElementById('equalizerCanvas');
 const eqCtx = equalizerCanvas.getContext('2d');
 let audioContext, analyser, dataArray, sourceNode;
 
-// Функция для инициализации эквалайзера (анализ микрофона и системного звука)
+// Функция для инициализации эквалайзера (анализ микрофона)
 async function initEqualizer() {
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -424,18 +337,65 @@ async function initEqualizer() {
 
 function drawEqualizer() {
     eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
-    analyser.getByteFrequencyData(dataArray);
-    for (let i = 0; i < dataArray.length; i++) {
-        const val = dataArray[i];
-        const x = i * (equalizerCanvas.width / dataArray.length);
-        const h = (val / 255) * equalizerCanvas.height;
-        eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
-        eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / dataArray.length) - 2, h);
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        for (let i = 0; i < dataArray.length; i++) {
+            const val = dataArray[i];
+            const x = i * (equalizerCanvas.width / dataArray.length);
+            const h = (val / 255) * equalizerCanvas.height;
+            eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+            eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / dataArray.length) - 2, h);
+        }
     }
     requestAnimationFrame(drawEqualizer);
 }
 
 initEqualizer();
+
+// ========== ГОЛОСОВОЙ ВВОД ==========
+let recognition;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        terminalInput.value = transcript;
+        addTerminalLine('Голосовой ввод: ' + transcript);
+    };
+    recognition.onstart = function() {
+        isRecording = true;
+        voiceBtn.classList.add('active');
+        addTerminalLine('Голосовой ввод: старт');
+    };
+    recognition.onend = function() {
+        isRecording = false;
+        voiceBtn.classList.remove('active');
+        addTerminalLine('Голосовой ввод: завершён');
+    };
+    recognition.onerror = function(e) {
+        addTerminalLine('Ошибка голосового ввода: ' + e.error);
+    };
+
+    voiceBtn.addEventListener('click', function() {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (err) {
+                addTerminalLine('Ошибка запуска голосового ввода: ' + err.message);
+            }
+        }
+    });
+} else {
+    voiceBtn.disabled = true;
+    voiceBtn.title = 'Голосовой ввод не поддерживается';
+    addTerminalLine('Голосовой ввод не поддерживается этим браузером');
+}
 
 // ========== БЕСКОНЕЧНАЯ ЛЕНТА НОВИНОК ==========
 const feedList = document.getElementById('feedList');
@@ -448,7 +408,7 @@ async function loadFeed(search = '', page = 1) {
     isLoadingFeed = true;
     // Для примера — используем Unsplash API для картинок
     // Для музыки/видео можно подключить YouTube/Spotify API (или заглушки)
-    const url = `https://api.unsplash.com/photos?client_id=YOUR_UNSPLASH_ACCESS_KEY&page=${page}&per_page=10&query=${encodeURIComponent(search)}`;
+    const url = `https://api.unsplash.com/photos?client_id=4cdd506608deb1b08c40f61970f33cff3077942e66ae409851af78da0e2fd764&page=${page}&per_page=10&query=${encodeURIComponent(search)}`;
     try {
         const res = await fetch(url);
         const data = await res.json();
