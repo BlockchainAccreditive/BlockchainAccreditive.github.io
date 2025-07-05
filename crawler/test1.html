@@ -9,7 +9,9 @@
     <script src="https://unpkg.com/helia/dist/index.min.js"></script>
     <script src="https://unpkg.com/@helia/ipfs-connector/dist/index.min.js"></script>
     <style>
-         ::-webkit-scrollbar {width: 3px;} 
+        /* СТИЛЬ ДЛЯ СКРОЛЛБАРА */
+        ::-webkit-scrollbar {width: 3px;}
+        /* Основные стили для футуристичного интерфейса */
         body {
             margin: 0;
             padding: 0;
@@ -311,6 +313,45 @@ terminalInput.addEventListener('keydown', function(e) {
 
 // ========== ГОЛОСОВОЙ ВВОД ==========
 let recognition;
+let voiceEqStream, voiceEqSource, voiceEqAnalyser, voiceEqData, voiceEqAnimId;
+function startVoiceEqualizer() {
+    if (voiceEqAnimId) cancelAnimationFrame(voiceEqAnimId);
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        voiceEqStream = stream;
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        voiceEqSource = ctx.createMediaStreamSource(stream);
+        voiceEqAnalyser = ctx.createAnalyser();
+        voiceEqAnalyser.fftSize = 64;
+        voiceEqData = new Uint8Array(voiceEqAnalyser.frequencyBinCount);
+        voiceEqSource.connect(voiceEqAnalyser);
+        function drawVoiceEq() {
+            eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+            voiceEqAnalyser.getByteFrequencyData(voiceEqData);
+            for (let i = 0; i < voiceEqData.length; i++) {
+                const val = voiceEqData[i];
+                const x = i * (equalizerCanvas.width / voiceEqData.length);
+                const h = (val / 255) * equalizerCanvas.height;
+                eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+                eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / voiceEqData.length) - 2, h);
+            }
+            voiceEqAnimId = requestAnimationFrame(drawVoiceEq);
+        }
+        drawVoiceEq();
+    }).catch(() => {
+        eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+        eqCtx.fillStyle = '#ff0033';
+        eqCtx.font = '16px JetBrains Mono, monospace';
+        eqCtx.fillText('Микрофон не доступен', 20, 40);
+    });
+}
+function stopVoiceEqualizer() {
+    if (voiceEqAnimId) cancelAnimationFrame(voiceEqAnimId);
+    if (voiceEqStream) {
+        voiceEqStream.getTracks().forEach(track => track.stop());
+        voiceEqStream = null;
+    }
+    eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+}
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
@@ -327,14 +368,17 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         isRecording = true;
         voiceBtn.classList.add('active');
         addTerminalLine('Голосовой ввод: старт');
+        startVoiceEqualizer();
     };
     recognition.onend = function() {
         isRecording = false;
         voiceBtn.classList.remove('active');
         addTerminalLine('Голосовой ввод: завершён');
+        stopVoiceEqualizer();
     };
     recognition.onerror = function(e) {
         addTerminalLine('Ошибка голосового ввода: ' + e.error);
+        stopVoiceEqualizer();
     };
 
     voiceBtn.addEventListener('click', function() {
@@ -481,7 +525,10 @@ function resizeIpfsCanvas() {
 }
 window.addEventListener('resize', resizeIpfsCanvas);
 resizeIpfsCanvas();
-
+// Гарантируем, что canvas всегда виден и не перекрывается
+ipfsBgCanvas.style.display = 'block';
+ipfsBgCanvas.style.zIndex = '0';
+ipfsBgCanvas.style.pointerEvents = 'none';
 // Простая визуализация: центральная нода (вы), несколько соседей
 function drawIpfsNodes() {
     ipfsBgCtx.clearRect(0, 0, ipfsBgCanvas.width, ipfsBgCanvas.height);
