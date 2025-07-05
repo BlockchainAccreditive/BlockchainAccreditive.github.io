@@ -618,7 +618,6 @@ async function loadFeed(search = '', page = 1) {
         // Используем YouTube Data API v3 (public fetch, только последние видео)
         // Если нет API-ключа, используем публичный плейлист канала
         // ID канала: UCwK8x6YgCw0v6M8PZgBqpsA
-        // Публичный плейлист: PLzQW1S6Qb6wVQw1n2U5lHppZArYrusS4E
         // Для демо — используем RSS feed (YouTube поддерживает)
         const YT_FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCwK8x6YgCw0v6M8PZgBqpsA';
         try {
@@ -647,14 +646,15 @@ async function loadFeed(search = '', page = 1) {
                 throw new Error('Нет видео');
             }
         } catch (e) {
-            // Если не удалось загрузить — показываем 6 реальных видео с канала (захардкоженные ID)
+            // Если не удалось загрузить — показываем 6 реальных видео с канала @EnesYilmazer (захардкоженные ID)
+            // Все ID взяты с https://www.youtube.com/@EnesYilmazer
             const fallbackVideos = [
-                'QwZT7T-TXT0',
-                'Q1qk7k1K2tw',
-                '0nWbTgFzQxA',
-                '1b4n5lHnU4g',
-                'w4r7F1l8u1E',
-                '1Q9Qw7F1l8U'
+                'AYk93yuSDsg', // "INSIDE a $32,500,000 BEVERLY HILLS MANSION!"
+                'U8Cd_McCdow', // "INSIDE a $295,000,000 MEGA MANSION"
+                'bumsIF8hbi0', // "INSIDE a $45,000,000 LOS ANGELES MANSION!"
+                'JOZQMrb6G1o', // "INSIDE a $10,000,000 NYC Penthouse with INCREDIBLE VIEWS"
+                'AfSWldaT-AE', // "INSIDE a $100,000,000 LOS ANGELES MEGA MANSION!"
+                'aN9DH_GxqEo'  // "INSIDE a $50,000,000 MIAMI WATERFRONT MANSION!"
             ];
             fallbackVideos.forEach(videoId => {
                 const card = document.createElement('div');
