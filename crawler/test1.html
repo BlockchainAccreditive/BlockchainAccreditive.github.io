@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -627,30 +626,38 @@ async function loadFeed(search = '', page = 1) {
                 const analyzeResultTF = card.querySelector('.analyze-tf');
                 const opencvBtn = card.querySelector('.opencv-btn');
                 const analyzeResultCV = card.querySelector('.analyze-opencv');
-                const imgOrCanvasSelector = () => card.querySelector('img,canvas');
-
-                // Сохраняем оригинальное изображение для возврата
                 const originalImg = card.querySelector('img').cloneNode(true);
-                let tfCanvas = null;
-                let cvCanvas = null;
+
+                function ensureOriginalImg() {
+                    // Если на карточке нет <img>, вернуть оригинальное изображение
+                    const current = card.querySelector('img,canvas');
+                    if (!current || current.tagName !== 'IMG') {
+                        if (current && current.parentNode) current.replaceWith(originalImg.cloneNode(true));
+                    }
+                }
 
                 analyzeBtn.addEventListener('click', function() {
                     if (analyzeResultTF.classList.contains('open')) {
                         analyzeResultTF.classList.remove('open');
                         analyzeBtn.textContent = 'Анализировать';
-                        // Возвращаем исходное изображение вместо canvas (если был анализ)
-                        if (tfCanvas && tfCanvas.parentNode) {
-                            tfCanvas.replaceWith(originalImg.cloneNode(true));
-                            tfCanvas = null;
+                        // Возвращаем <img> при закрытии анализа
+                        const current = card.querySelector('img,canvas');
+                        if (current && current.tagName === 'CANVAS' && current.parentNode) {
+                            current.replaceWith(originalImg.cloneNode(true));
                         }
                         return;
                     }
+                    // Перед анализом всегда возвращаем <img>
+                    ensureOriginalImg();
                     analyzeResultTF.classList.add('open');
                     analyzeBtn.textContent = 'Скрыть анализ';
-                    if (analyzeResultTF.dataset.analyzed === 'true') return;
-                    analyzeImageTF(imgOrCanvasSelector(), analyzeResultTF).then(canvas => {
-                        tfCanvas = canvas;
-                        analyzeResultTF.dataset.analyzed = 'true';
+                    analyzeImageTF(originalImg, analyzeResultTF).then(canvas => {
+                        if (canvas) {
+                            const current = card.querySelector('img,canvas');
+                            if (current && current.tagName === 'IMG' && current.parentNode) {
+                                current.replaceWith(canvas);
+                            }
+                        }
                     });
                 });
                 // Кнопка OpenCV анализа
@@ -658,19 +665,24 @@ async function loadFeed(search = '', page = 1) {
                     if (analyzeResultCV.classList.contains('open')) {
                         analyzeResultCV.classList.remove('open');
                         opencvBtn.textContent = 'OpenCV-анализ';
-                        // Возвращаем исходное изображение вместо canvas (если был анализ)
-                        if (cvCanvas && cvCanvas.parentNode) {
-                            cvCanvas.replaceWith(originalImg.cloneNode(true));
-                            cvCanvas = null;
+                        // Возвращаем <img> при закрытии анализа
+                        const current = card.querySelector('img,canvas');
+                        if (current && current.tagName === 'CANVAS' && current.parentNode) {
+                            current.replaceWith(originalImg.cloneNode(true));
                         }
                         return;
                     }
+                    // Перед анализом всегда возвращаем <img>
+                    ensureOriginalImg();
                     analyzeResultCV.classList.add('open');
                     opencvBtn.textContent = 'Скрыть анализ';
-                    if (analyzeResultCV.dataset.analyzed === 'true') return;
-                    opencvAnalyzeImage(imgOrCanvasSelector(), analyzeResultCV).then(canvas => {
-                        cvCanvas = canvas;
-                        analyzeResultCV.dataset.analyzed = 'true';
+                    opencvAnalyzeImage(originalImg, analyzeResultCV).then(canvas => {
+                        if (canvas) {
+                            const current = card.querySelector('img,canvas');
+                            if (current && current.tagName === 'IMG' && current.parentNode) {
+                                current.replaceWith(canvas);
+                            }
+                        }
                     });
                 });
                 feedList.appendChild(card);
