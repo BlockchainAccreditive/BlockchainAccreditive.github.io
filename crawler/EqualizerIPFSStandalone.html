@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equalizer + IPFS Helia Demo</title>
+    <script src="https://unpkg.com/helia/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@helia/ipfs-connector/dist/index.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #181c24;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #eqCanvas {
+            width: 320px;
+            height: 100px;
+            background: #232946;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,255,231,0.08);
+            margin-bottom: 32px;
+            display: block;
+        }
+        #ipfsCanvas {
+            width: 600px;
+            height: 300px;
+            background: #1a1d2b;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,255,231,0.08);
+            display: block;
+        }
+        .label {
+            margin-bottom: 8px;
+            color: #00ffe7;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="label">Эквалайзер (микрофон)</div>
+    <canvas id="eqCanvas" width="320" height="100"></canvas>
+    <div class="label">IPFS Helia визуализация</div>
+    <canvas id="ipfsCanvas" width="600" height="300"></canvas>
+<script>
+// ====== Эквалайзер (анализатор микрофона) ======
+const eqCanvas = document.getElementById('eqCanvas');
+const eqCtx = eqCanvas.getContext('2d');
+let audioContext, analyser, dataArray, sourceNode;
+async function initEqualizer() {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 64;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        sourceNode = audioContext.createMediaStreamSource(stream);
+        sourceNode.connect(analyser);
+        drawEqualizer();
+    } catch (e) {
+        eqCtx.fillStyle = '#ff0033';
+        eqCtx.font = '16px JetBrains Mono, monospace';
+        eqCtx.fillText('Микрофон не доступен', 20, 40);
+    }
+}
+function drawEqualizer() {
+    eqCtx.clearRect(0, 0, eqCanvas.width, eqCanvas.height);
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        for (let i = 0; i < dataArray.length; i++) {
+            const val = dataArray[i];
+            const x = i * (eqCanvas.width / dataArray.length);
+            const h = (val / 255) * eqCanvas.height;
+            eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+            eqCtx.fillRect(x, eqCanvas.height - h, (eqCanvas.width / dataArray.length) - 2, h);
+        }
+    }
+    requestAnimationFrame(drawEqualizer);
+}
+initEqualizer();
+
+// ====== IPFS Helia визуализация ======
+const ipfsCanvas = document.getElementById('ipfsCanvas');
+const ipfsCtx = ipfsCanvas.getContext('2d');
+let helia, ipfsNodeId = null;
+async function initHelia() {
+    try {
+        helia = await window.Helia.createHelia();
+        const id = await helia.libp2p.peerId.toString();
+        ipfsNodeId = id;
+        drawIpfsNodes();
+    } catch (e) {
+        ipfsCtx.fillStyle = '#ff0033';
+        ipfsCtx.font = '16px JetBrains Mono, monospace';
+        ipfsCtx.fillText('Helia не инициализирована', 20, 40);
+    }
+}
+function drawIpfsNodes() {
+    ipfsCtx.clearRect(0, 0, ipfsCanvas.width, ipfsCanvas.height);
+    const cx = ipfsCanvas.width / 2;
+    const cy = ipfsCanvas.height / 2;
+    // Центральная нода
+    ipfsCtx.beginPath();
+    ipfsCtx.arc(cx, cy, 32, 0, 2 * Math.PI);
+    ipfsCtx.fillStyle = '#00ffe7';
+    ipfsCtx.shadowColor = '#00ffe7';
+    ipfsCtx.shadowBlur = 16;
+    ipfsCtx.fill();
+    ipfsCtx.shadowBlur = 0;
+    // Соседние ноды (заглушка)
+    const neighborCount = 6;
+    const radius = 100;
+    for (let i = 0; i < neighborCount; i++) {
+        const angle = (2 * Math.PI / neighborCount) * i;
+        const nx = cx + Math.cos(angle) * radius;
+        const ny = cy + Math.sin(angle) * radius;
+        // Линия к соседу
+        ipfsCtx.beginPath();
+        ipfsCtx.moveTo(cx, cy);
+        ipfsCtx.lineTo(nx, ny);
+        ipfsCtx.strokeStyle = '#2e3350';
+        ipfsCtx.lineWidth = 2;
+        ipfsCtx.stroke();
+        // Соседняя нода
+        ipfsCtx.beginPath();
+        ipfsCtx.arc(nx, ny, 18, 0, 2 * Math.PI);
+        ipfsCtx.fillStyle = '#232946';
+        ipfsCtx.fill();
+        ipfsCtx.beginPath();
+        ipfsCtx.arc(nx, ny, 10, 0, 2 * Math.PI);
+        ipfsCtx.fillStyle = '#00ffe788';
+        ipfsCtx.fill();
+    }
+    // ID вашей ноды (если есть)
+    if (ipfsNodeId) {
+        ipfsCtx.font = 'bold 14px JetBrains Mono, monospace';
+        ipfsCtx.fillStyle = '#fff';
+        ipfsCtx.textAlign = 'center';
+        ipfsCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 4);
+    }
+}
+initHelia();
+</script>
+</body>
+</html>
