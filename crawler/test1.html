@@ -138,7 +138,7 @@
             transition: box-shadow 0.2s;
         }
         .feed-card:hover {
-            box-shadow: 0 4px 32px rgba(0,255,231,0.12);
+            box-shadow: 0 4px 12px rgba(0,255,231,0.12);
         }
         .feed-card img, .feed-card video, .feed-card audio {
             max-width: 100%;
@@ -810,10 +810,17 @@ loadFeed();
 let helia, ipfsNodeId = null;
 async function initHelia() {
     try {
-        helia = await window.Helia.createHelia();
-        const id = await helia.libp2p.peerId.toString();
+        // Для Helia 3.x
+        helia = await Helia.createHelia();
+        // peerId теперь доступен так:
+        let id = null;
+        if (helia.libp2p && helia.libp2p.peerId && helia.libp2p.peerId.toString) {
+            id = helia.libp2p.peerId.toString();
+        } else if (helia.peerId && helia.peerId.toString) {
+            id = helia.peerId.toString();
+        }
         ipfsNodeId = id;
-        addTerminalLine('Helia (IPFS) node started: ' + id);
+        addTerminalLine('Helia (IPFS) node started: ' + (id || 'не удалось получить peerId'));
         console.log('Helia (IPFS) node started:', id);
     } catch (e) {
         addTerminalLine('Ошибка инициализации Helia: ' + e.message);
@@ -831,11 +838,9 @@ function resizeIpfsCanvas() {
 }
 window.addEventListener('resize', resizeIpfsCanvas);
 resizeIpfsCanvas();
-// Гарантируем, что canvas всегда виден и не перекрывается
 ipfsBgCanvas.style.display = 'block';
 ipfsBgCanvas.style.zIndex = '0';
 ipfsBgCanvas.style.pointerEvents = 'none';
-// Простая визуализация: центральная нода (вы), несколько соседей
 function drawIpfsNodes() {
     ipfsBgCtx.clearRect(0, 0, ipfsBgCanvas.width, ipfsBgCanvas.height);
     const cx = ipfsBgCanvas.width / 2;
@@ -878,6 +883,12 @@ function drawIpfsNodes() {
         ipfsBgCtx.fillStyle = '#fff';
         ipfsBgCtx.textAlign = 'center';
         ipfsBgCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 4);
+    } else {
+        // Если нет peerId — рисуем просто центральную ноду
+        ipfsBgCtx.font = 'bold 14px JetBrains Mono, monospace';
+        ipfsBgCtx.fillStyle = '#fff';
+        ipfsBgCtx.textAlign = 'center';
+        ipfsBgCtx.fillText('IPFS', cx, cy + 4);
     }
     requestAnimationFrame(drawIpfsNodes);
 }
@@ -952,6 +963,7 @@ async function analyzeImageTF(imgElem, resultElem) {
         visCanvas.style.display = 'block';
         visCanvas.style.maxWidth = '100%';
         visCanvas.style.margin = '8px 0';
+        visCanvas.style.borderRadius = '8px';
         const visCtx = visCanvas.getContext('2d');
         visCtx.drawImage(testImg, 0, 0);
         // Детекция объектов
@@ -1034,6 +1046,7 @@ async function opencvAnalyzeImage(imgElem, resultElem) {
                 visCanvas.style.display = 'block';
                 visCanvas.style.maxWidth = '100%';
                 visCanvas.style.margin = '8px 0';
+                visCanvas.style.borderRadius = '8px';
                 const visCtx = visCanvas.getContext('2d');
                 visCtx.drawImage(testImg, 0, 0);
                 // OpenCV обработка
@@ -1109,8 +1122,8 @@ async function opencvAnalyzeImage(imgElem, resultElem) {
 // Для полноценной работы с музыкой/видео — подключите соответствующие API.
 // Для Unsplash API получите access key: https://unsplash.com/developers
 // Все ключевые части подробно комментированы на русском языке.
+// Обновление списка доступных аудио/видео для анализа.
 
-// Обновление списка доступных аудио/видео для анализа
 function updateAudioSourceList() {
     const mediaEls = Array.from(document.querySelectorAll('audio,video'));
     eqAudioSelect.innerHTML = '';
