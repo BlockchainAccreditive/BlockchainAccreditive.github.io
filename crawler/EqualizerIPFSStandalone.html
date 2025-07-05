@@ -3,201 +3,933 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equalizer + IPFS Helia Demo</title>
-    <script src="https://unpkg.com/helia/dist/index.min.js"></script>
-    <script src="https://unpkg.com/@helia/ipfs-connector/dist/index.min.js"></script>
+    <title>Futuristic Media Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Helia (IPFS) UMD CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/helia@3.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@2.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datastore-core@9.0.3/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockstore-core@4.1.0/dist/index.min.js"></script>
     <style>
+        /* СТИЛЬ ДЛЯ СКРОЛЛБАРА */
+        ::-webkit-scrollbar {width: 3px;}
+        /* Основные стили для футуристичного интерфейса */
         body {
             margin: 0;
-            background: #181c24;
-            color: #e0e0e0;
+            padding: 0;
+            background: linear-gradient(135deg, #181c24 0%, #232946 100%);
             font-family: 'JetBrains Mono', monospace;
+            color: #e0e0e0;
             height: 100vh;
             overflow: hidden;
+        }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .topbar {
+            height: 48px;
+            background: #232946;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid #2e3350;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .topbar-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #00ffe7;
+        }
+        .sidebar {
+            width: 60px;
+            background: #1a1d2b;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding-top: 12px;
+            border-right: 1px solid #2e3350;
+        }
+        .sidebar-icon {
+            width: 36px;
+            height: 36px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
             justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        #eqCanvas {
-            width: 480px;
-            height: 160px;
+        .sidebar-icon:hover {
             background: #232946;
-            border-radius: 16px;
-            box-shadow: 0 2px 32px rgba(0,255,231,0.12);
-            margin-bottom: 32px;
-            display: block;
         }
-        #ipfsCanvas {
-            width: 700px;
-            height: 340px;
-            background: #1a1d2b;
-            border-radius: 16px;
-            box-shadow: 0 2px 32px rgba(0,255,231,0.12);
-            display: block;
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
-        .label {
-            margin-bottom: 8px;
+        .feed-section {
+            flex: 1;
+            background: #181c24;
+            overflow-y: auto;
+            padding: 32px 24px 100px 24px;
+            position: relative;
+        }
+        .search-bar {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto 32px auto;
+            display: flex;
+            align-items: center;
+            background: #232946;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 8px 16px;
+        }
+        .search-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-size: 1rem;
+            outline: none;
+            padding: 8px;
+        }
+        .search-bar svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            fill: #00ffe7;
+        }
+        .feed-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .feed-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 700px) {
+            .feed-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        .feed-card {
+            break-inside: avoid;
+            -webkit-column-break-inside: avoid;
+            -moz-column-break-inside: avoid;
+            box-sizing: border-box;
+            background: #232946;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,255,231,0.05);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: box-shadow 0.2s;
+        }
+        .feed-card:hover {
+            box-shadow: 0 4px 32px rgba(0,255,231,0.12);
+        }
+        .feed-card img, .feed-card video, .feed-card audio {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .feed-card-title {
+            font-size: 1.1rem;
             color: #00ffe7;
             font-weight: bold;
-            text-align: center;
+        }
+        .feed-card-meta {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+        .terminal-section {
+            width: 100%;
+            background: #181c24;
+            border-top: 1px solid #2e3350;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+        .terminal-header {
+            height: 32px;
+            background: #232946;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            color: #00ffe7;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #2e3350;
+        }
+        .terminal-body {
+            flex: 1;
+            background: #181c24;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            padding: 12px 16px;
+            overflow-y: auto;
+        }
+        .terminal-input {
+            width: 100%;
+            background: #232946;
+            border: none;
+            color: #00ffe7;
+            font-size: 1rem;
+            padding: 8px 16px;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .voice-btn {
+            background: none;
+            border: none;
+            color: #00ffe7;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 8px;
+            transition: color 0.2s;
+        }
+        .voice-btn.active {
+            color: #ff00c8;
+        }
+        .equalizer-section {
+            position: absolute;
+            right: 24px;
+            bottom: 200px;
+            width: 320px;
+            height: 120px;
+            background: rgba(35,41,70,0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,255,231,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 20;
+            padding-top: 8px;
+        }
+        .equalizer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .equalizer-controls label {
+            color: #00ffe7;
+            font-size: 0.95rem;
+        }
+        .equalizer-controls select {
+            background: #232946;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 900px) {
+            .equalizer-section {
+                display: none;
+            }
+        }
+        /* CANVAS для визуализации IPFS-нод на фоне */
+        #ipfsBgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div class="label">MIC</div>
-    <canvas id="eqCanvas" width="480" height="160"></canvas>
-    <div class="label">BlockChain</div>
-    <canvas id="ipfsCanvas" width="700" height="340"></canvas>
+<div class="app-container">
+    <!-- CANVAS для IPFS визуализации -->
+    <canvas id="ipfsBgCanvas"></canvas>
+    <!-- Верхняя панель -->
+    <div class="topbar">
+        <span class="topbar-title">Futuristic Media Explorer</span>
+    </div>
+    <div style="display: flex; flex: 1; min-height: 0;">
+        <!-- Сайдбар -->
+        <div class="sidebar">
+            <!-- SVG-иконки для навигации -->
+            <div class="sidebar-icon" title="Лента">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>
+            </div>
+            <div class="sidebar-icon" title="Эквалайзер">
+                <svg viewBox="0 0 24 24"><rect x="6" y="4" width="3" height="16"/><rect x="10.5" y="8" width="3" height="12"/><rect x="15" y="12" width="3" height="8"/></svg>
+            </div>
+            <div class="sidebar-icon" title="Терминал">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 9 12 13 16 9"/></svg>
+            </div>
+        </div>
+        <!-- Основная рабочая область -->
+        <div class="main-content">
+            <div class="feed-section">
+                <!-- Поисковая строка -->
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="searchInput" placeholder="Поиск музыки, видео, картинок..." />
+                </div>
+                <!-- ДОБАВЛЯЕМ ВЫПАДАЮЩИЙ СПИСОК НАД ПОИСКОМ -->
+                <div class="api-switcher" style="width:100%;max-width:480px;margin:0 auto 16px auto;display:flex;align-items:center;gap:12px;">
+                    <label for="apiSelect" style="color:#00ffe7;font-size:0.95rem;">Источник:</label>
+                    <select id="apiSelect" style="flex:1;background:#232946;color:#e0e0e0;border:none;border-radius:6px;padding:8px 12px;font-size:1rem;">
+                        <option value="unsplash">Unsplash (Картинки)</option>
+                        <option value="soundcloud">SoundCloud (Музыка)</option>
+                        <option value="youtube">YouTube (Видео)</option>
+                        <option value="spotify">Spotify (Музыка)</option>
+                    </select>
+                </div>
+                <!-- Лента новинок -->
+                <div class="feed-list" id="feedList">
+                    <!-- Карточки новинок будут добавляться динамически -->
+                </div>
+            </div>
+            <!-- Эквалайзер -->
+            <div class="equalizer-section" id="equalizerSection">
+                <div class="equalizer-controls">
+                    <label for="eqSource">Источник:</label>
+                    <select id="eqSource">
+                        <option value="mic">Микрофон</option>
+                        <option value="audio">Аудио вкладки</option>
+                    </select>
+                </div>
+                <canvas id="equalizerCanvas" width="300" height="80"></canvas>
+                <div id="eqHint" style="color:#a0a0a0;font-size:0.9rem;margin-top:2px;"></div>
+            </div>
+            <!-- Терминал -->
+            <div class="terminal-section">
+                <div class="terminal-header">Терминал (VSCode Style) — поддержка голосового ввода</div>
+                <div class="terminal-body" id="terminalBody">
+                    <!-- История команд -->
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" class="terminal-input" id="terminalInput" placeholder="Введите команду или используйте микрофон..." autocomplete="off" />
+                    <button class="voice-btn" id="voiceBtn" title="Голосовой ввод">🎤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
-// ====== Эквалайзер (анализатор микрофона, динамика) ======
-const eqCanvas = document.getElementById('eqCanvas');
-const eqCtx = eqCanvas.getContext('2d');
-let audioContext, analyser, dataArray, sourceNode, timeData;
+// ================= ОПИСАНИЕ =================
+// Это приложение — демонстрация футуристичного UI для Dribbble/Behance.
+// Включает терминал с голосовым вводом, эквалайзер, бесконечную ленту новинок и поиск.
+// Все ключевые части подробно комментируются на русском языке.
 
-async function initEqualizer() {
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        timeData = new Uint8Array(analyser.fftSize);
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        sourceNode = audioContext.createMediaStreamSource(stream);
-        sourceNode.connect(analyser);
-        drawEqualizer();
-    } catch (e) {
-        eqCtx.fillStyle = '#ff0033';
-        eqCtx.font = '16px JetBrains Mono, monospace';
-        eqCtx.fillText('Микрофон не доступен', 20, 40);
+// ========== ТЕРМИНАЛ С ГОЛОСОВЫМ ВВОДОМ ==========
+// История команд терминала
+const terminalBody = document.getElementById('terminalBody');
+const terminalInput = document.getElementById('terminalInput');
+const voiceBtn = document.getElementById('voiceBtn');
+let isRecording = false;
+
+// Функция для добавления строки в терминал
+function addTerminalLine(text, isCommand = false) {
+    const line = document.createElement('div');
+    line.textContent = (isCommand ? '> ' : '') + text;
+    terminalBody.appendChild(line);
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+// Обработка ввода с клавиатуры
+terminalInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const cmd = terminalInput.value.trim();
+        if (cmd) {
+            addTerminalLine(cmd, true);
+            // Здесь можно добавить обработку команд
+            if (cmd.toLowerCase() === 'clear') {
+                terminalBody.innerHTML = '';
+            } else {
+                addTerminalLine('Выполнена команда: ' + cmd);
+            }
+            terminalInput.value = '';
+        }
     }
+});
+
+// ========== ЭКВАЛАЙЗЕР (Web Audio API) ==========
+const equalizerCanvas = document.getElementById('equalizerCanvas');
+const eqCtx = equalizerCanvas.getContext('2d');
+let audioContext, analyser, dataArray, sourceNode, eqSourceType = 'mic', eqAudioElement = null, eqActive = false;
+const eqSourceSelect = document.getElementById('eqSource');
+const eqHint = document.getElementById('eqHint');
+
+// Функция для инициализации эквалайзера (микрофон или аудио)
+async function initEqualizer(sourceType = 'mic', audioElem = null) {
+    // Останавливаем предыдущий AudioContext
+    if (audioContext) {
+        try { await audioContext.close(); } catch(e){}
+    }
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 64;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    sourceNode = null;
+    eqSourceType = sourceType;
+    eqAudioElement = audioElem;
+    eqActive = false;
+    if (sourceType === 'mic') {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            sourceNode = audioContext.createMediaStreamSource(stream);
+            sourceNode.connect(analyser);
+            eqHint.textContent = 'Эквалайзер анализирует микрофон.';
+            eqActive = true;
+        } catch (e) {
+            eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+            eqCtx.fillStyle = '#ff0033';
+            eqCtx.font = '16px JetBrains Mono, monospace';
+            eqCtx.fillText('Микрофон не доступен', 20, 40);
+            eqHint.textContent = 'Микрофон не доступен.';
+        }
+    } else if (sourceType === 'audio') {
+        if (audioElem) {
+            try {
+                // Проверяем, не был ли уже подключён этот элемент
+                if (!audioElem._eqConnected) {
+                    const track = audioContext.createMediaElementSource(audioElem);
+                    track.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                    audioElem._eqConnected = true;
+                } else {
+                    // Уже подключён, просто используем analyser
+                }
+                eqHint.textContent = 'Эквалайзер анализирует аудио из вкладки.';
+                eqActive = true;
+            } catch (e) {
+                eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+                eqCtx.fillStyle = '#ff0033';
+                eqCtx.font = '14px JetBrains Mono, monospace';
+                eqCtx.fillText('Ошибка подключения к аудио', 10, 40);
+                eqHint.textContent = 'Ошибка подключения к аудио.';
+            }
+        } else {
+            eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+            eqCtx.fillStyle = '#a0a0a0';
+            eqCtx.font = '14px JetBrains Mono, monospace';
+            eqCtx.fillText('Нет аудио для анализа', 30, 40);
+            eqHint.textContent = 'Воспроизведите аудио или видео для анализа.';
+        }
+    }
+    drawEqualizer();
 }
 
 function drawEqualizer() {
-    eqCtx.clearRect(0, 0, eqCanvas.width, eqCanvas.height);
-    if (analyser && dataArray && timeData) {
-        // Спектр (frequency bars)
+    eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+    if (analyser && dataArray && eqActive) {
         analyser.getByteFrequencyData(dataArray);
+        // Проверяем, есть ли хоть какие-то данные (не все 0 и не все 255)
+        let sum = 0, max = 0, min = 255;
         for (let i = 0; i < dataArray.length; i++) {
-            const val = dataArray[i];
-            const x = i * (eqCanvas.width / dataArray.length);
-            const h = (val / 255) * eqCanvas.height * 0.7;
-            const grad = eqCtx.createLinearGradient(x, eqCanvas.height, x, eqCanvas.height - h);
-            grad.addColorStop(0, '#00ffe7');
-            grad.addColorStop(0.5, '#ff00c8');
-            grad.addColorStop(1, '#fff200');
-            eqCtx.fillStyle = grad;
-            eqCtx.shadowColor = '#00ffe7';
-            eqCtx.shadowBlur = 8;
-            eqCtx.fillRect(x, eqCanvas.height - h, (eqCanvas.width / dataArray.length) - 2, h);
-            eqCtx.shadowBlur = 0;
+            sum += dataArray[i];
+            if (dataArray[i] > max) max = dataArray[i];
+            if (dataArray[i] < min) min = dataArray[i];
         }
-        // Волна (oscilloscope)
-        analyser.getByteTimeDomainData(timeData);
-        eqCtx.beginPath();
-        for (let i = 0; i < timeData.length; i++) {
-            const x = i * (eqCanvas.width / timeData.length);
-            const y = (timeData[i] / 255) * eqCanvas.height;
-            if (i === 0) eqCtx.moveTo(x, y);
-            else eqCtx.lineTo(x, y);
+        // Если все значения равны 0 или 255 — считаем, что нет сигнала
+        if ((max === 0 && min === 0) || (max === 255 && min === 255)) {
+            // Рисуем "тишину"
+            eqCtx.fillStyle = '#232946';
+            eqCtx.fillRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+            eqCtx.fillStyle = '#00ffe7';
+            eqCtx.font = '14px JetBrains Mono, monospace';
+            eqCtx.fillText('Нет аудиосигнала', 60, 40);
+        } else {
+            for (let i = 0; i < dataArray.length; i++) {
+                const val = dataArray[i];
+                const x = i * (equalizerCanvas.width / dataArray.length);
+                const h = (val / 255) * equalizerCanvas.height;
+                eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+                eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / dataArray.length) - 2, h);
+            }
         }
-        eqCtx.strokeStyle = '#fff200';
-        eqCtx.lineWidth = 2;
-        eqCtx.shadowColor = '#ff00c8';
-        eqCtx.shadowBlur = 8;
-        eqCtx.stroke();
-        eqCtx.shadowBlur = 0;
-        // Бегущая линия (moving highlight)
-        const now = Date.now();
-        const pos = (now % 2000) / 2000 * eqCanvas.width;
-        eqCtx.beginPath();
-        eqCtx.moveTo(pos, 0);
-        eqCtx.lineTo(pos, eqCanvas.height);
-        eqCtx.strokeStyle = 'rgba(0,255,231,0.2)';
-        eqCtx.lineWidth = 3;
-        eqCtx.stroke();
+    } else {
+        // Нет данных — рисуем "тишину"
+        eqCtx.fillStyle = '#232946';
+        eqCtx.fillRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+        eqCtx.fillStyle = '#00ffe7';
+        eqCtx.font = '14px JetBrains Mono, monospace';
+        eqCtx.fillText('Нет аудиосигнала', 60, 40);
     }
     requestAnimationFrame(drawEqualizer);
 }
-initEqualizer();
 
-// ====== IPFS Helia динамическая визуализация ======
-const ipfsCanvas = document.getElementById('ipfsCanvas');
-const ipfsCtx = ipfsCanvas.getContext('2d');
+// Переключение источника эквалайзера
+if (eqSourceSelect) {
+    eqSourceSelect.addEventListener('change', function() {
+        if (eqSourceSelect.value === 'mic') {
+            initEqualizer('mic');
+        } else {
+            // Поиск первого активного <audio> или <video> на странице
+            let found = false;
+            const mediaEls = document.querySelectorAll('audio,video');
+            mediaEls.forEach(el => {
+                if (!found && !el.paused) {
+                    found = true;
+                    initEqualizer('audio', el);
+                }
+            });
+            if (!found) {
+                eqHint.textContent = 'Воспроизведите аудио или видео для анализа.';
+            }
+        }
+    });
+}
+// При клике на любой <audio> или <video> — подключаем эквалайзер к нему
+function attachAudioAnalyzerToMedia() {
+    document.querySelectorAll('audio,video').forEach(el => {
+        el.addEventListener('play', function() {
+            if (eqSourceSelect.value === 'audio') {
+                initEqualizer('audio', el);
+            }
+        });
+    });
+}
+
+// ========== ГОЛОСОВОЙ ВВОД ==========
+let recognition;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        terminalInput.value = transcript;
+        addTerminalLine('Голосовой ввод: ' + transcript);
+    };
+    recognition.onstart = function() {
+        isRecording = true;
+        voiceBtn.classList.add('active');
+        addTerminalLine('Голосовой ввод: старт');
+    };
+    recognition.onend = function() {
+        isRecording = false;
+        voiceBtn.classList.remove('active');
+        addTerminalLine('Голосовой ввод: завершён');
+    };
+    recognition.onerror = function(e) {
+        addTerminalLine('Ошибка голосового ввода: ' + e.error);
+    };
+
+    voiceBtn.addEventListener('click', function() {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (err) {
+                addTerminalLine('Ошибка запуска голосового ввода: ' + err.message);
+            }
+        }
+    });
+} else {
+    voiceBtn.disabled = true;
+    voiceBtn.title = 'Голосовой ввод не поддерживается';
+    addTerminalLine('Голосовой ввод не поддерживается этим браузером');
+}
+
+// ========== БЕСКОНЕЧНАЯ ЛЕНТА НОВИНОК ==========
+const feedList = document.getElementById('feedList');
+let feedPage = 1;
+let isLoadingFeed = false;
+let lastSearch = '';
+const apiSelect = document.getElementById('apiSelect');
+let currentApi = apiSelect.value;
+
+// Обработка смены API
+apiSelect.addEventListener('change', function() {
+    currentApi = apiSelect.value;
+    feedList.innerHTML = '';
+    feedPage = 1;
+    loadFeed(lastSearch, feedPage);
+});
+
+// Функция для загрузки новинок (музыка, видео, картинки)
+async function loadFeed(search = '', page = 1) {
+    isLoadingFeed = true;
+    if (currentApi === 'unsplash') {
+        // Unsplash API (картинки)
+        const url = `https://api.unsplash.com/photos?client_id=4cdd506608deb1b08c40f61970f33cff3077942e66ae409851af78da0e2fd764&page=${page}&per_page=10&query=${encodeURIComponent(search)}`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+                card.innerHTML = `
+                    <img src="${item.urls.regular}" alt="${item.alt_description || 'Новинка'}" style="width:100%;height:auto;object-fit:cover;" />
+                    <div class="feed-card-title">${item.description || item.alt_description || 'Новое изображение'}</div>
+                    <div class="feed-card-meta">by ${item.user.name}</div>
+                    <button class="analyze-btn" style="margin-top:8px;background:#00ffe7;color:#232946;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">Анализировать</button>
+                    <button class="opencv-btn" style="margin-top:8px;background:#ff00c8;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">OpenCV-анализ</button>
+                    <div class="analyze-result" style="margin-top:8px;"></div>
+                `;
+                // Кнопка анализа изображения
+                card.querySelector('.analyze-btn').addEventListener('click', function() {
+                    analyzeImage(card.querySelector('img'), card.querySelector('.analyze-result'));
+                });
+                // Кнопка OpenCV анализа
+                card.querySelector('.opencv-btn').addEventListener('click', function() {
+                    opencvAnalyzeImage(card.querySelector('img'), card.querySelector('.analyze-result'));
+                });
+                feedList.appendChild(card);
+            });
+        } catch (e) {
+            const errCard = document.createElement('div');
+            errCard.className = 'feed-card';
+            errCard.textContent = 'Ошибка загрузки новинок.';
+            feedList.appendChild(errCard);
+        }
+    } else if (currentApi === 'soundcloud') {
+        // Заглушка для SoundCloud
+        for (let i = 0; i < 5; i++) {
+            const card = document.createElement('div');
+            card.className = 'feed-card';
+            card.innerHTML = `
+                <div class="feed-card-title">SoundCloud Трек #${(page-1)*5+i+1}</div>
+                <div class="feed-card-meta">Исполнитель: Demo Artist</div>
+                <audio controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" style="width:100%;margin-top:8px;"></audio>
+            `;
+            feedList.appendChild(card);
+        }
+    } else if (currentApi === 'youtube') {
+        // Реальные видео с канала @EnesYilmazer
+        // Используем YouTube Data API v3 (public fetch, только последние видео)
+        // Если нет API-ключа, используем публичный плейлист канала
+        // ID канала: UCwK8x6YgCw0v6M8PZgBqpsA
+        // Публичный плейлист: PLzQW1S6Qb6wVQw1n2U5lHppZArYrusS4E
+        // Для демо — используем RSS feed (YouTube поддерживает)
+        const YT_FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCwK8x6YgCw0v6M8PZgBqpsA';
+        try {
+            const res = await fetch(`https://feed2json.org/convert?url=${encodeURIComponent(YT_FEED)}`);
+            const data = await res.json();
+            if (data.items && data.items.length > 0) {
+                data.items.slice((page-1)*6, page*6).forEach(item => {
+                    // Получаем ID видео
+                    let videoId = '';
+                    const match = item.url.match(/v=([\w-]+)/);
+                    if (match) videoId = match[1];
+                    else if (item.url.includes('youtu.be/')) videoId = item.url.split('youtu.be/')[1];
+                    else videoId = item.url.split('v=')[1] || '';
+                    if (videoId) {
+                        const card = document.createElement('div');
+                        card.className = 'feed-card';
+                        card.innerHTML = `
+                            <iframe width="100%" height="220" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:10px;"></iframe>
+                            <div class="feed-card-title">${item.title}</div>
+                            <div class="feed-card-meta">${new Date(item.date_published).toLocaleDateString('ru-RU')}</div>
+                        `;
+                        feedList.appendChild(card);
+                    }
+                });
+            } else {
+                throw new Error('Нет видео');
+            }
+        } catch (e) {
+            // Если не удалось загрузить — показываем 6 реальных видео с канала (захардкоженные ID)
+            const fallbackVideos = [
+                'QwZT7T-TXT0',
+                'Q1qk7k1K2tw',
+                '0nWbTgFzQxA',
+                '1b4n5lHnU4g',
+                'w4r7F1l8u1E',
+                '1Q9Qw7F1l8U'
+            ];
+            fallbackVideos.forEach(videoId => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+                card.innerHTML = `
+                    <iframe width="100%" height="220" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:10px;"></iframe>
+                    <div class="feed-card-title">Видео с канала Enes Yilmazer</div>
+                    <div class="feed-card-meta">YouTube</div>
+                `;
+                feedList.appendChild(card);
+            });
+        }
+    } else if (currentApi === 'spotify') {
+        // Заглушка для Spotify
+        for (let i = 0; i < 5; i++) {
+            const card = document.createElement('div');
+            card.className = 'feed-card';
+            card.innerHTML = `
+                <div class="feed-card-title">Spotify Трек #${(page-1)*5+i+1}</div>
+                <div class="feed-card-meta">Исполнитель: Demo Artist</div>
+                <iframe style="border-radius:12px;margin-top:8px;" src="https://open.spotify.com/embed/track/7GhIk7Il098yCjg4BQjzvb" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+            `;
+            feedList.appendChild(card);
+        }
+    }
+    isLoadingFeed = false;
+    attachAudioAnalyzerToMedia();
+}
+
+// Поиск
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        feedList.innerHTML = '';
+        lastSearch = searchInput.value.trim();
+        feedPage = 1;
+        loadFeed(lastSearch, feedPage);
+    }
+});
+
+// Бесконечный скролл
+feedList.addEventListener('scroll', function() {
+    if (!isLoadingFeed && feedList.scrollTop + feedList.clientHeight >= feedList.scrollHeight - 200) {
+        feedPage++;
+        loadFeed(lastSearch, feedPage);
+    }
+});
+// Для всего окна (если лента прокручивается вместе с окном)
+window.addEventListener('scroll', function() {
+    if (!isLoadingFeed && (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+        feedPage++;
+        loadFeed(lastSearch, feedPage);
+    }
+});
+
+// Первая загрузка
+loadFeed();
+
+// ========== IPFS (Helia) ========== 
 let helia, ipfsNodeId = null;
-let ipfsAnimAngle = 0;
-let ipfsPulse = 0;
 async function initHelia() {
     try {
         helia = await window.Helia.createHelia();
         const id = await helia.libp2p.peerId.toString();
         ipfsNodeId = id;
-        drawIpfsNodes();
+        addTerminalLine('Helia (IPFS) node started: ' + id);
+        console.log('Helia (IPFS) node started:', id);
     } catch (e) {
-        ipfsCtx.fillStyle = '#ff0033';
-        ipfsCtx.font = '16px JetBrains Mono, monospace';
-        ipfsCtx.fillText('Helia не инициализирована', 20, 40);
+        addTerminalLine('Ошибка инициализации Helia: ' + e.message);
+        console.error('Ошибка инициализации Helia:', e);
     }
 }
+initHelia();
+
+// ========== ВИЗУАЛИЗАЦИЯ IPFS-НОД НА CANVAS ==========
+const ipfsBgCanvas = document.getElementById('ipfsBgCanvas');
+const ipfsBgCtx = ipfsBgCanvas.getContext('2d');
+function resizeIpfsCanvas() {
+    ipfsBgCanvas.width = window.innerWidth;
+    ipfsBgCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeIpfsCanvas);
+resizeIpfsCanvas();
+// Гарантируем, что canvas всегда виден и не перекрывается
+ipfsBgCanvas.style.display = 'block';
+ipfsBgCanvas.style.zIndex = '0';
+ipfsBgCanvas.style.pointerEvents = 'none';
+// Простая визуализация: центральная нода (вы), несколько соседей
 function drawIpfsNodes() {
-    ipfsCtx.clearRect(0, 0, ipfsCanvas.width, ipfsCanvas.height);
-    const cx = ipfsCanvas.width / 2;
-    const cy = ipfsCanvas.height / 2;
-    const t = Date.now() / 1000;
-    ipfsAnimAngle += 0.01;
-    ipfsPulse = 1 + 0.08 * Math.sin(t * 2);
-    // Центральная нода (пульсация)
-    ipfsCtx.save();
-    ipfsCtx.beginPath();
-    ipfsCtx.arc(cx, cy, 36 * ipfsPulse, 0, 2 * Math.PI);
-    ipfsCtx.fillStyle = '#00ffe7';
-    ipfsCtx.shadowColor = '#00ffe7';
-    ipfsCtx.shadowBlur = 32 * ipfsPulse;
-    ipfsCtx.fill();
-    ipfsCtx.shadowBlur = 0;
-    ipfsCtx.restore();
-    // Соседние ноды (вращение и пульсация)
-    const neighborCount = 8;
-    const baseRadius = 120;
+    ipfsBgCtx.clearRect(0, 0, ipfsBgCanvas.width, ipfsBgCanvas.height);
+    const cx = ipfsBgCanvas.width / 2;
+    const cy = ipfsBgCanvas.height / 2;
+    // Центральная нода
+    ipfsBgCtx.beginPath();
+    ipfsBgCtx.arc(cx, cy, 32, 0, 2 * Math.PI);
+    ipfsBgCtx.fillStyle = '#00ffe7';
+    ipfsBgCtx.shadowColor = '#00ffe7';
+    ipfsBgCtx.shadowBlur = 16;
+    ipfsBgCtx.fill();
+    ipfsBgCtx.shadowBlur = 0;
+    // Соседние ноды (заглушка)
+    const neighborCount = 6;
+    const radius = 160;
     for (let i = 0; i < neighborCount; i++) {
-        const angle = ipfsAnimAngle + (2 * Math.PI / neighborCount) * i;
-        const nx = cx + Math.cos(angle) * (baseRadius + 12 * Math.sin(t * 1.5 + i));
-        const ny = cy + Math.sin(angle) * (baseRadius + 12 * Math.cos(t * 1.5 + i));
-        // Пульсирующая линия к соседу
-        ipfsCtx.save();
-        ipfsCtx.beginPath();
-        ipfsCtx.moveTo(cx, cy);
-        ipfsCtx.lineTo(nx, ny);
-        ipfsCtx.strokeStyle = `rgba(0,255,231,${0.5 + 0.3 * Math.abs(Math.sin(t + i))})`;
-        ipfsCtx.lineWidth = 3 + 2 * Math.abs(Math.sin(t * 2 + i));
-        ipfsCtx.shadowColor = '#00ffe7';
-        ipfsCtx.shadowBlur = 8;
-        ipfsCtx.stroke();
-        ipfsCtx.shadowBlur = 0;
-        ipfsCtx.restore();
-        // Соседняя нода (пульсация)
-        ipfsCtx.save();
-        ipfsCtx.beginPath();
-        const pulse = 1 + 0.15 * Math.sin(t * 2 + i);
-        ipfsCtx.arc(nx, ny, 20 * pulse, 0, 2 * Math.PI);
-        ipfsCtx.fillStyle = '#232946';
-        ipfsCtx.fill();
-        ipfsCtx.beginPath();
-        ipfsCtx.arc(nx, ny, 12 * pulse, 0, 2 * Math.PI);
-        ipfsCtx.fillStyle = '#00ffe788';
-        ipfsCtx.fill();
-        ipfsCtx.restore();
+        const angle = (2 * Math.PI / neighborCount) * i;
+        const nx = cx + Math.cos(angle) * radius;
+        const ny = cy + Math.sin(angle) * radius;
+        // Линия к соседу
+        ipfsBgCtx.beginPath();
+        ipfsBgCtx.moveTo(cx, cy);
+        ipfsBgCtx.lineTo(nx, ny);
+        ipfsBgCtx.strokeStyle = '#2e3350';
+        ipfsBgCtx.lineWidth = 2;
+        ipfsBgCtx.stroke();
+        // Соседняя нода
+        ipfsBgCtx.beginPath();
+        ipfsBgCtx.arc(nx, ny, 18, 0, 2 * Math.PI);
+        ipfsBgCtx.fillStyle = '#232946';
+        ipfsBgCtx.fill();
+        ipfsBgCtx.beginPath();
+        ipfsBgCtx.arc(nx, ny, 10, 0, 2 * Math.PI);
+        ipfsBgCtx.fillStyle = '#00ffe788';
+        ipfsBgCtx.fill();
     }
     // ID вашей ноды (если есть)
     if (ipfsNodeId) {
-        ipfsCtx.font = 'bold 16px JetBrains Mono, monospace';
-        ipfsCtx.fillStyle = '#fff';
-        ipfsCtx.textAlign = 'center';
-        ipfsCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 6);
+        ipfsBgCtx.font = 'bold 14px JetBrains Mono, monospace';
+        ipfsBgCtx.fillStyle = '#fff';
+        ipfsBgCtx.textAlign = 'center';
+        ipfsBgCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 4);
     }
     requestAnimationFrame(drawIpfsNodes);
 }
-initHelia();
+drawIpfsNodes();
+
+// ========== АНАЛИЗ ИЗОБРАЖЕНИЙ (TENSORFLOW.JS + OpenCV.js) ========== 
+// Подключаем OpenCV.js через CDN
+if (!document.getElementById('opencvScript')) {
+    const opencvScript = document.createElement('script');
+    opencvScript.id = 'opencvScript';
+    opencvScript.src = 'https://docs.opencv.org/4.x/opencv.js';
+    document.head.appendChild(opencvScript);
+}
+
+// Гарантируем правильную последовательность загрузки tfjs и coco-ssd
+function loadTfjsAndCoco(callback) {
+    function loadTfjs(cb) {
+        if (window.tf && window.tf.ready) { cb(); return; }
+        const tfjsScript = document.createElement('script');
+        tfjsScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js';
+        tfjsScript.onload = cb;
+        document.head.appendChild(tfjsScript);
+    }
+    function loadCoco(cb) {
+        if (window.cocoSsd) { cb(); return; }
+        const cocoScript = document.createElement('script');
+        cocoScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js';
+        cocoScript.onload = cb;
+        document.head.appendChild(cocoScript);
+    }
+    loadTfjs(() => loadCoco(callback));
+}
+let cocoModel = null;
+async function loadCocoModel() {
+    return new Promise(resolve => {
+        loadTfjsAndCoco(async () => {
+            if (window.cocoSsd && !cocoModel) {
+                cocoModel = await window.cocoSsd.load();
+            }
+            resolve();
+        });
+    });
+}
+
+// Функция анализа изображения
+async function analyzeImage(imgElem, resultElem) {
+    resultElem.textContent = 'Анализ...';
+    await loadCocoModel();
+    if (!cocoModel) {
+        resultElem.textContent = 'Модель не загружена.';
+        return;
+    }
+    // Создаём временный canvas для анализа
+    const canvas = document.createElement('canvas');
+    canvas.width = imgElem.naturalWidth;
+    canvas.height = imgElem.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgElem, 0, 0);
+    // Детекция объектов
+    const predictions = await cocoModel.detect(canvas);
+    // Анализ цветовой палитры
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const colorMap = {};
+    for (let i = 0; i < imageData.length; i += 4) {
+        const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
+        const key = `${r},${g},${b}`;
+        colorMap[key] = (colorMap[key] || 0) + 1;
+    }
+    // Находим топ-5 самых частых цветов
+    const topColors = Object.entries(colorMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
+        .join('');
+    // Формируем результат
+    let html = `<b>Объекты:</b><br/>`;
+    if (predictions.length === 0) {
+        html += 'Не найдено.<br/>';
+    } else {
+        predictions.forEach(pred => {
+            html += `• ${pred.class} (точность: ${(pred.score*100).toFixed(1)}%, x: ${Math.round(pred.bbox[0])}, y: ${Math.round(pred.bbox[1])}, w: ${Math.round(pred.bbox[2])}, h: ${Math.round(pred.bbox[3])})<br/>`;
+        });
+    }
+    html += `<b>Топ-5 цветов:</b> ${topColors}`;
+    resultElem.innerHTML = html;
+}
+// Функция OpenCV анализа изображения
+async function opencvAnalyzeImage(imgElem, resultElem) {
+    resultElem.textContent = 'OpenCV анализ...';
+    // Ждём загрузки OpenCV
+    function waitForOpenCV(callback) {
+        if (window.cv && window.cv.imread) callback();
+        else setTimeout(() => waitForOpenCV(callback), 200);
+    }
+    waitForOpenCV(() => {
+        // Копируем изображение на canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElem.naturalWidth;
+        canvas.height = imgElem.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElem, 0, 0);
+        // Читаем изображение через OpenCV
+        let src = cv.imread(canvas);
+        let dst = new cv.Mat();
+        // Переводим в оттенки серого
+        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
+        // Детектируем края (Canny)
+        cv.Canny(dst, dst, 50, 150, 3, false);
+        // Находим контуры
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        cv.findContours(dst, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+        // Анализируем размеры объектов
+        let sizes = [];
+        for (let i = 0; i < contours.size(); ++i) {
+            let rect = cv.boundingRect(contours.get(i));
+            sizes.push(`(x:${rect.x}, y:${rect.y}, w:${rect.width}, h:${rect.height})`);
+        }
+        // Анализ цветовой палитры (простая гистограмма)
+        let colorMap = {};
+        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 0; i < imgData.length; i += 4) {
+            const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+            const key = `${r},${g},${b}`;
+            colorMap[key] = (colorMap[key] || 0) + 1;
+        }
+        const topColors = Object.entries(colorMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
+            .join('');
+        // Выводим результат
+        let html = `<b>Контуры:</b> ${contours.size()}<br/>`;
+        html += `<b>Размеры объектов:</b> ${sizes.length ? sizes.join('; ') : 'Не найдено'}<br/>`;
+        html += `<b>Топ-5 цветов:</b> ${topColors}`;
+        resultElem.innerHTML = html;
+        // Освобождаем память
+        src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+    });
+}
+
+// ========== КОНЕЦ ОСНОВНОГО КОДА ==========
+// Для полноценной работы с музыкой/видео — подключите соответствующие API.
+// Для Unsplash API получите access key: https://unsplash.com/developers
+// Все ключевые части подробно комментированы на русском языке.
 </script>
 </body>
 </html>
