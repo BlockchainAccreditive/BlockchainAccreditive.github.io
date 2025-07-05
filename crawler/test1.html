@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Media Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Helia (IPFS) CDN -->
+    <script src="https://unpkg.com/helia/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@helia/ipfs-connector/dist/index.min.js"></script>
+    <style>
+            ::-webkit-scrollbar {width: 3;} 
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #181c24 0%, #232946 100%);
+            font-family: 'JetBrains Mono', monospace;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .topbar {
+            height: 48px;
+            background: #232946;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid #2e3350;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .topbar-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #00ffe7;
+        }
+        .sidebar {
+            width: 60px;
+            background: #1a1d2b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 12px;
+            border-right: 1px solid #2e3350;
+        }
+        .sidebar-icon {
+            width: 36px;
+            height: 36px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .sidebar-icon:hover {
+            background: #232946;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+        .feed-section {
+            flex: 1;
+            background: #181c24;
+            overflow-y: auto;
+            padding: 32px 24px 100px 24px;
+            position: relative;
+        }
+        .search-bar {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto 32px auto;
+            display: flex;
+            align-items: center;
+            background: #232946;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 8px 16px;
+        }
+        .search-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-size: 1rem;
+            outline: none;
+            padding: 8px;
+        }
+        .search-bar svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            fill: #00ffe7;
+        }
+        .feed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        .feed-card {
+            background: #232946;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,255,231,0.05);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: box-shadow 0.2s;
+        }
+        .feed-card:hover {
+            box-shadow: 0 4px 32px rgba(0,255,231,0.12);
+        }
+        .feed-card img, .feed-card video, .feed-card audio {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .feed-card-title {
+            font-size: 1.1rem;
+            color: #00ffe7;
+            font-weight: bold;
+        }
+        .feed-card-meta {
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+        .terminal-section {
+            width: 100%;
+            background: #181c24;
+            border-top: 1px solid #2e3350;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+        .terminal-header {
+            height: 32px;
+            background: #232946;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            color: #00ffe7;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #2e3350;
+        }
+        .terminal-body {
+            flex: 1;
+            background: #181c24;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            padding: 12px 16px;
+            overflow-y: auto;
+        }
+        .terminal-input {
+            width: 100%;
+            background: #232946;
+            border: none;
+            color: #00ffe7;
+            font-size: 1rem;
+            padding: 8px 16px;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .voice-btn {
+            background: none;
+            border: none;
+            color: #00ffe7;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 8px;
+            transition: color 0.2s;
+        }
+        .voice-btn.active {
+            color: #ff00c8;
+        }
+        .equalizer-section {
+            position: absolute;
+            right: 24px;
+            bottom: 200px;
+            width: 320px;
+            height: 100px;
+            background: rgba(35,41,70,0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,255,231,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        @media (max-width: 900px) {
+            .equalizer-section {
+                display: none;
+            }
+        }
+        /* CANVAS для визуализации IPFS-нод на фоне */
+        #ipfsBgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- CANVAS для IPFS визуализации -->
+    <canvas id="ipfsBgCanvas"></canvas>
+    <!-- Верхняя панель -->
+    <div class="topbar">
+        <span class="topbar-title">Futuristic Media Explorer</span>
+    </div>
+    <div style="display: flex; flex: 1; min-height: 0;">
+        <!-- Сайдбар -->
+        <div class="sidebar">
+            <!-- SVG-иконки для навигации -->
+            <div class="sidebar-icon" title="Лента">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>
+            </div>
+            <div class="sidebar-icon" title="Эквалайзер">
+                <svg viewBox="0 0 24 24"><rect x="6" y="4" width="3" height="16"/><rect x="10.5" y="8" width="3" height="12"/><rect x="15" y="12" width="3" height="8"/></svg>
+            </div>
+            <div class="sidebar-icon" title="Терминал">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 9 12 13 16 9"/></svg>
+            </div>
+        </div>
+        <!-- Основная рабочая область -->
+        <div class="main-content">
+            <div class="feed-section">
+                <!-- Поисковая строка -->
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="searchInput" placeholder="Поиск музыки, видео, картинок..." />
+                </div>
+                <!-- Лента новинок -->
+                <div class="feed-list" id="feedList">
+                    <!-- Карточки новинок будут добавляться динамически -->
+                </div>
+            </div>
+            <!-- Эквалайзер -->
+            <div class="equalizer-section" id="equalizerSection">
+                <canvas id="equalizerCanvas" width="300" height="80"></canvas>
+            </div>
+            <!-- Терминал -->
+            <div class="terminal-section">
+                <div class="terminal-header">Терминал (VSCode Style) — поддержка голосового ввода</div>
+                <div class="terminal-body" id="terminalBody">
+                    <!-- История команд -->
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" class="terminal-input" id="terminalInput" placeholder="Введите команду или используйте микрофон..." autocomplete="off" />
+                    <button class="voice-btn" id="voiceBtn" title="Голосовой ввод">🎤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+
+// ========== ТЕРМИНАЛ С ГОЛОСОВЫМ ВВОДОМ ==========
+// История команд терминала
+const terminalBody = document.getElementById('terminalBody');
+const terminalInput = document.getElementById('terminalInput');
+const voiceBtn = document.getElementById('voiceBtn');
+let isRecording = false;
+
+// Функция для добавления строки в терминал
+function addTerminalLine(text, isCommand = false) {
+    const line = document.createElement('div');
+    line.textContent = (isCommand ? '> ' : '') + text;
+    terminalBody.appendChild(line);
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+// Обработка ввода с клавиатуры
+terminalInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const cmd = terminalInput.value.trim();
+        if (cmd) {
+            addTerminalLine(cmd, true);
+            // Здесь можно добавить обработку команд
+            if (cmd.toLowerCase() === 'clear') {
+                terminalBody.innerHTML = '';
+            } else {
+                addTerminalLine('Выполнена команда: ' + cmd);
+            }
+            terminalInput.value = '';
+        }
+    }
+});
+
+// ========== ГОЛОСОВОЙ ВВОД ==========
+let recognition;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        terminalInput.value = transcript;
+        addTerminalLine('Голосовой ввод: ' + transcript);
+    };
+    recognition.onstart = function() {
+        isRecording = true;
+        voiceBtn.classList.add('active');
+    };
+    recognition.onend = function() {
+        isRecording = false;
+        voiceBtn.classList.remove('active');
+    };
+    recognition.onerror = function(e) {
+        addTerminalLine('Ошибка голосового ввода: ' + e.error);
+    };
+
+    voiceBtn.addEventListener('click', function() {
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    });
+} else {
+    voiceBtn.disabled = true;
+    voiceBtn.title = 'Голосовой ввод не поддерживается';
+}
+
+// ========== ЭКВАЛАЙЗЕР (Web Audio API) ==========
+const equalizerCanvas = document.getElementById('equalizerCanvas');
+const eqCtx = equalizerCanvas.getContext('2d');
+let audioContext, analyser, dataArray, sourceNode;
+
+// Функция для инициализации эквалайзера (анализ микрофона и системного звука)
+async function initEqualizer() {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 64;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        // Получаем доступ к микрофону
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        sourceNode = audioContext.createMediaStreamSource(stream);
+        sourceNode.connect(analyser);
+        drawEqualizer();
+    } catch (e) {
+        eqCtx.fillStyle = '#ff0033';
+        eqCtx.font = '16px JetBrains Mono, monospace';
+        eqCtx.fillText('Микрофон не доступен', 20, 40);
+    }
+}
+
+function drawEqualizer() {
+    eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+    analyser.getByteFrequencyData(dataArray);
+    for (let i = 0; i < dataArray.length; i++) {
+        const val = dataArray[i];
+        const x = i * (equalizerCanvas.width / dataArray.length);
+        const h = (val / 255) * equalizerCanvas.height;
+        eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+        eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / dataArray.length) - 2, h);
+    }
+    requestAnimationFrame(drawEqualizer);
+}
+
+initEqualizer();
+
+// ========== БЕСКОНЕЧНАЯ ЛЕНТА НОВИНОК ==========
+const feedList = document.getElementById('feedList');
+let feedPage = 1;
+let isLoadingFeed = false;
+let lastSearch = '';
+
+// Функция для загрузки новинок (музыка, видео, картинки)
+async function loadFeed(search = '', page = 1) {
+    isLoadingFeed = true;
+    // Для примера — используем Unsplash API для картинок
+    // Для музыки/видео можно подключить YouTube/Spotify API (или заглушки)
+    const url = `https://api.unsplash.com/photos?client_id=YOUR_UNSPLASH_ACCESS_KEY&page=${page}&per_page=10&query=${encodeURIComponent(search)}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'feed-card';
+            card.innerHTML = `
+                <img src="${item.urls.regular}" alt="${item.alt_description || 'Новинка'}" />
+                <div class="feed-card-title">${item.description || item.alt_description || 'Новое изображение'}</div>
+                <div class="feed-card-meta">by ${item.user.name}</div>
+            `;
+            feedList.appendChild(card);
+        });
+    } catch (e) {
+        const errCard = document.createElement('div');
+        errCard.className = 'feed-card';
+        errCard.textContent = 'Ошибка загрузки новинок.';
+        feedList.appendChild(errCard);
+    }
+    isLoadingFeed = false;
+}
+
+// Поиск
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        feedList.innerHTML = '';
+        lastSearch = searchInput.value.trim();
+        feedPage = 1;
+        loadFeed(lastSearch, feedPage);
+    }
+});
+
+// Бесконечный скролл
+feedList.addEventListener('scroll', function() {
+    if (!isLoadingFeed && feedList.scrollTop + feedList.clientHeight >= feedList.scrollHeight - 200) {
+        feedPage++;
+        loadFeed(lastSearch, feedPage);
+    }
+});
+// Для всего окна (если лента прокручивается вместе с окном)
+window.addEventListener('scroll', function() {
+    if (!isLoadingFeed && (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+        feedPage++;
+        loadFeed(lastSearch, feedPage);
+    }
+});
+
+// Первая загрузка
+loadFeed();
+
+// ========== IPFS (Helia) ========== 
+let helia, ipfsNodeId = null;
+async function initHelia() {
+    try {
+        helia = await window.Helia.createHelia();
+        const id = await helia.libp2p.peerId.toString();
+        ipfsNodeId = id;
+        console.log('Helia (IPFS) node started:', id);
+        // Можно добавить отображение статуса в UI
+    } catch (e) {
+        console.error('Ошибка инициализации Helia:', e);
+    }
+}
+initHelia();
+
+// ========== ВИЗУАЛИЗАЦИЯ IPFS-НОД НА CANVAS ==========
+const ipfsBgCanvas = document.getElementById('ipfsBgCanvas');
+const ipfsBgCtx = ipfsBgCanvas.getContext('2d');
+function resizeIpfsCanvas() {
+    ipfsBgCanvas.width = window.innerWidth;
+    ipfsBgCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeIpfsCanvas);
+resizeIpfsCanvas();
+
+// Простая визуализация: центральная нода (вы), несколько соседей
+function drawIpfsNodes() {
+    ipfsBgCtx.clearRect(0, 0, ipfsBgCanvas.width, ipfsBgCanvas.height);
+    const cx = ipfsBgCanvas.width / 2;
+    const cy = ipfsBgCanvas.height / 2;
+    // Центральная нода
+    ipfsBgCtx.beginPath();
+    ipfsBgCtx.arc(cx, cy, 32, 0, 2 * Math.PI);
+    ipfsBgCtx.fillStyle = '#00ffe7';
+    ipfsBgCtx.shadowColor = '#00ffe7';
+    ipfsBgCtx.shadowBlur = 16;
+    ipfsBgCtx.fill();
+    ipfsBgCtx.shadowBlur = 0;
+    // Соседние ноды (заглушка)
+    const neighborCount = 6;
+    const radius = 160;
+    for (let i = 0; i < neighborCount; i++) {
+        const angle = (2 * Math.PI / neighborCount) * i;
+        const nx = cx + Math.cos(angle) * radius;
+        const ny = cy + Math.sin(angle) * radius;
+        // Линия к соседу
+        ipfsBgCtx.beginPath();
+        ipfsBgCtx.moveTo(cx, cy);
+        ipfsBgCtx.lineTo(nx, ny);
+        ipfsBgCtx.strokeStyle = '#2e3350';
+        ipfsBgCtx.lineWidth = 2;
+        ipfsBgCtx.stroke();
+        // Соседняя нода
+        ipfsBgCtx.beginPath();
+        ipfsBgCtx.arc(nx, ny, 18, 0, 2 * Math.PI);
+        ipfsBgCtx.fillStyle = '#232946';
+        ipfsBgCtx.fill();
+        ipfsBgCtx.beginPath();
+        ipfsBgCtx.arc(nx, ny, 10, 0, 2 * Math.PI);
+        ipfsBgCtx.fillStyle = '#00ffe788';
+        ipfsBgCtx.fill();
+    }
+    // ID вашей ноды (если есть)
+    if (ipfsNodeId) {
+        ipfsBgCtx.font = 'bold 14px JetBrains Mono, monospace';
+        ipfsBgCtx.fillStyle = '#fff';
+        ipfsBgCtx.textAlign = 'center';
+        ipfsBgCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 4);
+    }
+    requestAnimationFrame(drawIpfsNodes);
+}
+drawIpfsNodes();
+
+// ========== КОНЕЦ ОСНОВНОГО КОДА ==========
+// Для полноценной работы с музыкой/видео — подключите соответствующие API.
+// Для Unsplash API получите access key: https://unsplash.com/developers
+// Все ключевые части подробно комментированы на русском языке.
+</script>
+</body>
+</html>
