@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,9 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Futuristic Media Explorer</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Helia (IPFS) CDN -->
-    <script src="https://unpkg.com/helia/dist/index.min.js"></script>
-    <script src="https://unpkg.com/@helia/ipfs-connector/dist/index.min.js"></script>
+    <!-- Helia (IPFS) UMD CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/helia@3.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@helia/unixfs@2.0.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datastore-core@9.0.3/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockstore-core@4.1.0/dist/index.min.js"></script>
     <style>
         /* СТИЛЬ ДЛЯ СКРОЛЛБАРА */
         ::-webkit-scrollbar {width: 3px;}
@@ -226,6 +229,15 @@
             align-items: center;
             margin-bottom: 4px;
         }
+        .eq-audio-select {
+            background: #232946;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.95rem;
+            margin-left: 8px;
+        }
         .equalizer-controls label {
             color: #00ffe7;
             font-size: 0.95rem;
@@ -252,6 +264,21 @@
             height: 100vh;
             z-index: 0;
             pointer-events: none;
+        }
+        .analyze-result {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), padding 0.3s;
+            padding: 0 0;
+        }
+        .analyze-result.open {
+            max-height: 1000px;
+            padding: 8px 0 0 0;
+        }
+        .analyze-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
     </style>
 </head>
@@ -308,6 +335,7 @@
                         <option value="mic">Микрофон</option>
                         <option value="audio">Аудио вкладки</option>
                     </select>
+                    <select id="eqAudioSelect" class="eq-audio-select" style="display:none;"></select>
                 </div>
                 <canvas id="equalizerCanvas" width="300" height="80"></canvas>
                 <div id="eqHint" style="color:#a0a0a0;font-size:0.9rem;margin-top:2px;"></div>
@@ -367,14 +395,15 @@ terminalInput.addEventListener('keydown', function(e) {
 // ========== ЭКВАЛАЙЗЕР (Web Audio API) ==========
 const equalizerCanvas = document.getElementById('equalizerCanvas');
 const eqCtx = equalizerCanvas.getContext('2d');
-let audioContext, analyser, dataArray, sourceNode, eqSourceType = 'mic', eqAudioElement = null;
+let audioContext, analyser, dataArray, sourceNode, eqSourceType = 'mic', eqAudioElement = null, eqActive = false;
 const eqSourceSelect = document.getElementById('eqSource');
 const eqHint = document.getElementById('eqHint');
+const eqAudioSelect = document.getElementById('eqAudioSelect');
 
 // Функция для инициализации эквалайзера (микрофон или аудио)
 async function initEqualizer(sourceType = 'mic', audioElem = null) {
     if (audioContext) {
-        audioContext.close();
+        try { await audioContext.close(); } catch(e){console.warn('Ошибка закрытия AudioContext:', e);}
     }
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
@@ -383,30 +412,50 @@ async function initEqualizer(sourceType = 'mic', audioElem = null) {
     sourceNode = null;
     eqSourceType = sourceType;
     eqAudioElement = audioElem;
+    eqActive = false;
     if (sourceType === 'mic') {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             sourceNode = audioContext.createMediaStreamSource(stream);
             sourceNode.connect(analyser);
             eqHint.textContent = 'Эквалайзер анализирует микрофон.';
+            eqActive = true;
+            console.log('Эквалайзер: подключён к микрофону');
         } catch (e) {
+            eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
             eqCtx.fillStyle = '#ff0033';
             eqCtx.font = '16px JetBrains Mono, monospace';
             eqCtx.fillText('Микрофон не доступен', 20, 40);
             eqHint.textContent = 'Микрофон не доступен.';
+            console.error('Эквалайзер: ошибка доступа к микрофону', e);
         }
     } else if (sourceType === 'audio') {
         if (audioElem) {
             try {
-                const track = audioContext.createMediaElementSource(audioElem);
-                track.connect(analyser);
-                analyser.connect(audioContext.destination);
+                if (!audioElem._eqConnected) {
+                    const track = audioContext.createMediaElementSource(audioElem);
+                    track.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                    audioElem._eqConnected = true;
+                }
                 eqHint.textContent = 'Эквалайзер анализирует аудио из вкладки.';
+                eqActive = true;
+                console.log('Эквалайзер: подключён к аудио/видео элементу', audioElem);
             } catch (e) {
+                eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+                eqCtx.fillStyle = '#ff0033';
+                eqCtx.font = '14px JetBrains Mono, monospace';
+                eqCtx.fillText('Ошибка подключения к аудио', 10, 40);
                 eqHint.textContent = 'Ошибка подключения к аудио.';
+                console.error('Эквалайзер: ошибка подключения к аудио/видео', e);
             }
         } else {
-            eqHint.textContent = 'Выберите аудио или видео для анализа.';
+            eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+            eqCtx.fillStyle = '#a0a0a0';
+            eqCtx.font = '14px JetBrains Mono, monospace';
+            eqCtx.fillText('Нет аудио для анализа', 30, 40);
+            eqHint.textContent = 'Воспроизведите аудио или видео для анализа.';
+            console.warn('Эквалайзер: не найдено ни одного активного аудио/видео элемента');
         }
     }
     drawEqualizer();
@@ -414,15 +463,37 @@ async function initEqualizer(sourceType = 'mic', audioElem = null) {
 
 function drawEqualizer() {
     eqCtx.clearRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
-    if (analyser && dataArray) {
+    if (analyser && dataArray && eqActive) {
         analyser.getByteFrequencyData(dataArray);
+        let sum = 0, max = 0, min = 255;
         for (let i = 0; i < dataArray.length; i++) {
-            const val = dataArray[i];
-            const x = i * (equalizerCanvas.width / dataArray.length);
-            const h = (val / 255) * equalizerCanvas.height;
-            eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
-            eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / dataArray.length) - 2, h);
+            sum += dataArray[i];
+            if (dataArray[i] > max) max = dataArray[i];
+            if (dataArray[i] < min) min = dataArray[i];
         }
+        if ((max === 0 && min === 0) || (max === 255 && min === 255)) {
+            eqCtx.fillStyle = '#232946';
+            eqCtx.fillRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+            eqCtx.fillStyle = '#00ffe7';
+            eqCtx.font = '14px JetBrains Mono, monospace';
+            eqCtx.fillText('Нет аудиосигнала', 60, 40);
+            // Для отладки:
+            // console.log('Эквалайзер: нет аудиосигнала (max:', max, ', min:', min, ')');
+        } else {
+            for (let i = 0; i < dataArray.length; i++) {
+                const val = dataArray[i];
+                const x = i * (equalizerCanvas.width / dataArray.length);
+                const h = (val / 255) * equalizerCanvas.height;
+                eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+                eqCtx.fillRect(x, equalizerCanvas.height - h, (equalizerCanvas.width / dataArray.length) - 2, h);
+            }
+        }
+    } else {
+        eqCtx.fillStyle = '#232946';
+        eqCtx.fillRect(0, 0, equalizerCanvas.width, equalizerCanvas.height);
+        eqCtx.fillStyle = '#00ffe7';
+        eqCtx.font = '14px JetBrains Mono, monospace';
+        eqCtx.fillText('Нет аудиосигнала', 60, 40);
     }
     requestAnimationFrame(drawEqualizer);
 }
@@ -431,29 +502,37 @@ function drawEqualizer() {
 if (eqSourceSelect) {
     eqSourceSelect.addEventListener('change', function() {
         if (eqSourceSelect.value === 'mic') {
+            eqAudioSelect.style.display = 'none';
             initEqualizer('mic');
         } else {
-            // Поиск первого активного <audio> или <video> на странице
-            let found = false;
-            const mediaEls = document.querySelectorAll('audio,video');
-            mediaEls.forEach(el => {
-                if (!found && !el.paused) {
-                    found = true;
-                    initEqualizer('audio', el);
-                }
-            });
-            if (!found) {
+            updateAudioSourceList();
+            if (eqAudioSelect.options.length > 0) {
+                eqAudioSelect.style.display = '';
+                const mediaEls = Array.from(document.querySelectorAll('audio,video'));
+                const idx = parseInt(eqAudioSelect.value) || 0;
+                initEqualizer('audio', mediaEls[idx]);
+            } else {
                 eqHint.textContent = 'Воспроизведите аудио или видео для анализа.';
             }
         }
     });
+    eqAudioSelect.addEventListener('change', function() {
+        const mediaEls = Array.from(document.querySelectorAll('audio,video'));
+        const idx = parseInt(eqAudioSelect.value) || 0;
+        if (mediaEls[idx]) {
+            initEqualizer('audio', mediaEls[idx]);
+        }
+    });
 }
-// При клике на любой <audio> или <video> — подключаем эквалайзер к нему
+// При клике на любой <audio> или <video> — обновляем список и подключаем эквалайзер к выбранному
 function attachAudioAnalyzerToMedia() {
-    document.querySelectorAll('audio,video').forEach(el => {
+    document.querySelectorAll('audio,video').forEach((el, idx) => {
         el.addEventListener('play', function() {
             if (eqSourceSelect.value === 'audio') {
-                initEqualizer('audio', el);
+                updateAudioSourceList();
+                const selIdx = parseInt(eqAudioSelect.value) || 0;
+                const mediaEls = Array.from(document.querySelectorAll('audio,video'));
+                initEqualizer('audio', mediaEls[selIdx] || el);
             }
         });
     });
@@ -536,17 +615,63 @@ async function loadFeed(search = '', page = 1) {
                     <img src="${item.urls.regular}" alt="${item.alt_description || 'Новинка'}" style="width:100%;height:auto;object-fit:cover;" />
                     <div class="feed-card-title">${item.description || item.alt_description || 'Новое изображение'}</div>
                     <div class="feed-card-meta">by ${item.user.name}</div>
-                    <button class="analyze-btn" style="margin-top:8px;background:#00ffe7;color:#232946;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">Анализировать</button>
-                    <button class="opencv-btn" style="margin-top:8px;background:#ff00c8;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">OpenCV-анализ</button>
-                    <div class="analyze-result" style="margin-top:8px;"></div>
+                    <div class="analyze-row">
+                        <button class="analyze-btn" style="margin-top:8px;background:#00ffe7;color:#232946;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">Анализировать</button>
+                        <div class="analyze-result analyze-tf" style="margin-top:8px;"></div>
+                        <button class="opencv-btn" style="margin-top:8px;background:#ff00c8;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">OpenCV-анализ</button>
+                        <div class="analyze-result analyze-opencv" style="margin-top:8px;"></div>
+                    </div>
                 `;
-                // Кнопка анализа изображения
-                card.querySelector('.analyze-btn').addEventListener('click', function() {
-                    analyzeImage(card.querySelector('img'), card.querySelector('.analyze-result'));
+                // Кнопка анализа (TensorFlow.js)
+                const analyzeBtn = card.querySelector('.analyze-btn');
+                const analyzeResultTF = card.querySelector('.analyze-tf');
+                const opencvBtn = card.querySelector('.opencv-btn');
+                const analyzeResultCV = card.querySelector('.analyze-opencv');
+                const imgOrCanvasSelector = () => card.querySelector('img,canvas');
+
+                // Сохраняем оригинальное изображение для возврата
+                const originalImg = card.querySelector('img').cloneNode(true);
+                let tfCanvas = null;
+                let cvCanvas = null;
+
+                analyzeBtn.addEventListener('click', function() {
+                    if (analyzeResultTF.classList.contains('open')) {
+                        analyzeResultTF.classList.remove('open');
+                        analyzeBtn.textContent = 'Анализировать';
+                        // Возвращаем исходное изображение вместо canvas (если был анализ)
+                        if (tfCanvas && tfCanvas.parentNode) {
+                            tfCanvas.replaceWith(originalImg.cloneNode(true));
+                            tfCanvas = null;
+                        }
+                        return;
+                    }
+                    analyzeResultTF.classList.add('open');
+                    analyzeBtn.textContent = 'Скрыть анализ';
+                    if (analyzeResultTF.dataset.analyzed === 'true') return;
+                    analyzeImageTF(imgOrCanvasSelector(), analyzeResultTF).then(canvas => {
+                        tfCanvas = canvas;
+                        analyzeResultTF.dataset.analyzed = 'true';
+                    });
                 });
                 // Кнопка OpenCV анализа
-                card.querySelector('.opencv-btn').addEventListener('click', function() {
-                    opencvAnalyzeImage(card.querySelector('img'), card.querySelector('.analyze-result'));
+                opencvBtn.addEventListener('click', function() {
+                    if (analyzeResultCV.classList.contains('open')) {
+                        analyzeResultCV.classList.remove('open');
+                        opencvBtn.textContent = 'OpenCV-анализ';
+                        // Возвращаем исходное изображение вместо canvas (если был анализ)
+                        if (cvCanvas && cvCanvas.parentNode) {
+                            cvCanvas.replaceWith(originalImg.cloneNode(true));
+                            cvCanvas = null;
+                        }
+                        return;
+                    }
+                    analyzeResultCV.classList.add('open');
+                    opencvBtn.textContent = 'Скрыть анализ';
+                    if (analyzeResultCV.dataset.analyzed === 'true') return;
+                    opencvAnalyzeImage(imgOrCanvasSelector(), analyzeResultCV).then(canvas => {
+                        cvCanvas = canvas;
+                        analyzeResultCV.dataset.analyzed = 'true';
+                    });
                 });
                 feedList.appendChild(card);
             });
@@ -573,7 +698,6 @@ async function loadFeed(search = '', page = 1) {
         // Используем YouTube Data API v3 (public fetch, только последние видео)
         // Если нет API-ключа, используем публичный плейлист канала
         // ID канала: UCwK8x6YgCw0v6M8PZgBqpsA
-        // Публичный плейлист: PLzQW1S6Qb6wVQw1n2U5lHppZArYrusS4E
         // Для демо — используем RSS feed (YouTube поддерживает)
         const YT_FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCwK8x6YgCw0v6M8PZgBqpsA';
         try {
@@ -602,14 +726,15 @@ async function loadFeed(search = '', page = 1) {
                 throw new Error('Нет видео');
             }
         } catch (e) {
-            // Если не удалось загрузить — показываем 6 реальных видео с канала (захардкоженные ID)
+            // Если не удалось загрузить — показываем 6 реальных видео с канала @EnesYilmazer (захардкоженные ID)
+            // Все ID взяты с https://www.youtube.com/@EnesYilmazer
             const fallbackVideos = [
-                'QwZT7T-TXT0',
-                'Q1qk7k1K2tw',
-                '0nWbTgFzQxA',
-                '1b4n5lHnU4g',
-                'w4r7F1l8u1E',
-                '1Q9Qw7F1l8U'
+                'AYk93yuSDsg', // "INSIDE a $32,500,000 BEVERLY HILLS MANSION!"
+                'U8Cd_McCdow', // "INSIDE a $295,000,000 MEGA MANSION"
+                'bumsIF8hbi0', // "INSIDE a $45,000,000 LOS ANGELES MANSION!"
+                'JOZQMrb6G1o', // "INSIDE a $10,000,000 NYC Penthouse with INCREDIBLE VIEWS"
+                'AfSWldaT-AE', // "INSIDE a $100,000,000 LOS ANGELES MEGA MANSION!"
+                'aN9DH_GxqEo'  // "INSIDE a $50,000,000 MIAMI WATERFRONT MANSION!"
             ];
             fallbackVideos.forEach(videoId => {
                 const card = document.createElement('div');
@@ -637,6 +762,7 @@ async function loadFeed(search = '', page = 1) {
     }
     isLoadingFeed = false;
     attachAudioAnalyzerToMedia();
+    updateAudioSourceList();
 }
 
 // Поиск
@@ -753,106 +879,86 @@ if (!document.getElementById('opencvScript')) {
     opencvScript.src = 'https://docs.opencv.org/4.x/opencv.js';
     document.head.appendChild(opencvScript);
 }
-// Подключаем TensorFlow.js и COCO-SSD через CDN
-if (!document.getElementById('tfjsScript')) {
-    const tfjsScript = document.createElement('script');
-    tfjsScript.id = 'tfjsScript';
-    tfjsScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js';
-    document.head.appendChild(tfjsScript);
-}
-if (!document.getElementById('cocoScript')) {
-    const cocoScript = document.createElement('script');
-    cocoScript.id = 'cocoScript';
-    cocoScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js';
-    document.head.appendChild(cocoScript);
+
+// Гарантируем правильную последовательность загрузки tfjs и coco-ssd
+function loadTfjsAndCoco(callback) {
+    function loadTfjs(cb) {
+        if (window.tf && window.tf.ready) { cb(); return; }
+        const tfjsScript = document.createElement('script');
+        tfjsScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js';
+        tfjsScript.onload = cb;
+        document.head.appendChild(tfjsScript);
+    }
+    function loadCoco(cb) {
+        if (window.cocoSsd) { cb(); return; }
+        const cocoScript = document.createElement('script');
+        cocoScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js';
+        cocoScript.onload = cb;
+        document.head.appendChild(cocoScript);
+    }
+    loadTfjs(() => loadCoco(callback));
 }
 let cocoModel = null;
-// Загружаем модель COCO-SSD
 async function loadCocoModel() {
-    if (window.cocoSsd && !cocoModel) {
-        cocoModel = await window.cocoSsd.load();
-    }
-}
-document.addEventListener('DOMContentLoaded', loadCocoModel);
-// Функция анализа изображения
-async function analyzeImage(imgElem, resultElem) {
-    resultElem.textContent = 'Анализ...';
-    await loadCocoModel();
-    if (!cocoModel) {
-        resultElem.textContent = 'Модель не загружена.';
-        return;
-    }
-    // Создаём временный canvas для анализа
-    const canvas = document.createElement('canvas');
-    canvas.width = imgElem.naturalWidth;
-    canvas.height = imgElem.naturalHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imgElem, 0, 0);
-    // Детекция объектов
-    const predictions = await cocoModel.detect(canvas);
-    // Анализ цветовой палитры
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    const colorMap = {};
-    for (let i = 0; i < imageData.length; i += 4) {
-        const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
-        const key = `${r},${g},${b}`;
-        colorMap[key] = (colorMap[key] || 0) + 1;
-    }
-    // Находим топ-5 самых частых цветов
-    const topColors = Object.entries(colorMap)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
-        .join('');
-    // Формируем результат
-    let html = `<b>Объекты:</b><br/>`;
-    if (predictions.length === 0) {
-        html += 'Не найдено.<br/>';
-    } else {
-        predictions.forEach(pred => {
-            html += `• ${pred.class} (точность: ${(pred.score*100).toFixed(1)}%, x: ${Math.round(pred.bbox[0])}, y: ${Math.round(pred.bbox[1])}, w: ${Math.round(pred.bbox[2])}, h: ${Math.round(pred.bbox[3])})<br/>`;
+    return new Promise(resolve => {
+        loadTfjsAndCoco(async () => {
+            if (window.cocoSsd && !cocoModel) {
+                cocoModel = await window.cocoSsd.load();
+            }
+            resolve();
         });
-    }
-    html += `<b>Топ-5 цветов:</b> ${topColors}`;
-    resultElem.innerHTML = html;
+    });
 }
-// Функция OpenCV анализа изображения
-async function opencvAnalyzeImage(imgElem, resultElem) {
-    resultElem.textContent = 'OpenCV анализ...';
-    // Ждём загрузки OpenCV
-    function waitForOpenCV(callback) {
-        if (window.cv && window.cv.imread) callback();
-        else setTimeout(() => waitForOpenCV(callback), 200);
-    }
-    waitForOpenCV(() => {
-        // Копируем изображение на canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = imgElem.naturalWidth;
-        canvas.height = imgElem.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imgElem, 0, 0);
-        // Читаем изображение через OpenCV
-        let src = cv.imread(canvas);
-        let dst = new cv.Mat();
-        // Переводим в оттенки серого
-        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
-        // Детектируем края (Canny)
-        cv.Canny(dst, dst, 50, 150, 3, false);
-        // Находим контуры
-        let contours = new cv.MatVector();
-        let hierarchy = new cv.Mat();
-        cv.findContours(dst, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-        // Анализируем размеры объектов
-        let sizes = [];
-        for (let i = 0; i < contours.size(); ++i) {
-            let rect = cv.boundingRect(contours.get(i));
-            sizes.push(`(x:${rect.x}, y:${rect.y}, w:${rect.width}, h:${rect.height})`);
+
+// Функция анализа изображения
+async function analyzeImageTF(imgElem, resultElem) {
+    resultElem.textContent = 'Анализ...';
+    try {
+        await loadCocoModel();
+        if (!cocoModel) {
+            resultElem.textContent = 'Модель не загружена.';
+            console.error('TensorFlow.js: модель COCO-SSD не загружена');
+            return null;
         }
-        // Анализ цветовой палитры (простая гистограмма)
-        let colorMap = {};
-        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        for (let i = 0; i < imgData.length; i += 4) {
-            const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+        if (!window.tf || !window.cocoSsd) {
+            resultElem.textContent = 'TensorFlow.js или coco-ssd не загружены.';
+            console.error('TensorFlow.js или coco-ssd не загружены');
+            return null;
+        }
+        // Проверяем CORS
+        const testImg = new Image();
+        testImg.crossOrigin = 'anonymous';
+        testImg.src = imgElem.src || imgElem.toDataURL();
+        await new Promise((resolve, reject) => {
+            testImg.onload = resolve;
+            testImg.onerror = reject;
+        });
+        // Создаём canvas для визуализации
+        const visCanvas = document.createElement('canvas');
+        visCanvas.width = imgElem.naturalWidth || imgElem.width;
+        visCanvas.height = imgElem.naturalHeight || imgElem.height;
+        visCanvas.style.display = 'block';
+        visCanvas.style.maxWidth = '100%';
+        visCanvas.style.margin = '8px 0';
+        const visCtx = visCanvas.getContext('2d');
+        visCtx.drawImage(testImg, 0, 0);
+        // Детекция объектов
+        const predictions = await cocoModel.detect(visCanvas);
+        // Bounding box визуализация
+        predictions.forEach((pred, i) => {
+            visCtx.strokeStyle = `hsl(${(i*40)%360}, 100%, 50%)`;
+            visCtx.lineWidth = 3;
+            visCtx.strokeRect(...pred.bbox);
+            visCtx.font = 'bold 16px JetBrains Mono, monospace';
+            visCtx.fillStyle = visCtx.strokeStyle;
+            visCtx.fillText(pred.class, pred.bbox[0]+4, pred.bbox[1]+18);
+        });
+        // Анализ цветовой палитры
+        const ctx = visCtx;
+        const imageData = ctx.getImageData(0, 0, visCanvas.width, visCanvas.height).data;
+        const colorMap = {};
+        for (let i = 0; i < imageData.length; i += 4) {
+            const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
             const key = `${r},${g},${b}`;
             colorMap[key] = (colorMap[key] || 0) + 1;
         }
@@ -861,13 +967,129 @@ async function opencvAnalyzeImage(imgElem, resultElem) {
             .slice(0, 5)
             .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
             .join('');
-        // Выводим результат
-        let html = `<b>Контуры:</b> ${contours.size()}<br/>`;
-        html += `<b>Размеры объектов:</b> ${sizes.length ? sizes.join('; ') : 'Не найдено'}<br/>`;
+        let html = `<b>Объекты:</b><br/>`;
+        if (predictions.length === 0) {
+            html += 'Не найдено.<br/>';
+        } else {
+            predictions.forEach(pred => {
+                html += `• ${pred.class} (точность: ${(pred.score*100).toFixed(1)}%, x: ${Math.round(pred.bbox[0])}, y: ${Math.round(pred.bbox[1])}, w: ${Math.round(pred.bbox[2])}, h: ${Math.round(pred.bbox[3])})<br/>`;
+            });
+        }
         html += `<b>Топ-5 цветов:</b> ${topColors}`;
         resultElem.innerHTML = html;
-        // Освобождаем память
-        src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+        // === Заменяем исходное изображение на canvas с bounding box ===
+        if (imgElem.parentNode) imgElem.replaceWith(visCanvas);
+        console.log('TensorFlow.js: bounding box визуализация завершена', predictions);
+        return visCanvas;
+    } catch (err) {
+        if (err && err.message && err.message.includes('tainted')) {
+            resultElem.textContent = 'Ошибка: браузер не разрешает анализировать это изображение (CORS).';
+        } else {
+            resultElem.textContent = 'Ошибка анализа изображения: ' + err.message;
+        }
+        console.error('TensorFlow.js: ошибка анализа изображения', err);
+        return null;
+    }
+}
+// Функция OpenCV анализа изображения
+async function opencvAnalyzeImage(imgElem, resultElem) {
+    resultElem.textContent = 'OpenCV анализ...';
+    // Проверяем CORS
+    const testImg = new Image();
+    testImg.crossOrigin = 'anonymous';
+    testImg.src = imgElem.src;
+    try {
+        await new Promise((resolve, reject) => {
+            testImg.onload = resolve;
+            testImg.onerror = reject;
+        });
+    } catch (err) {
+        resultElem.textContent = 'Ошибка: браузер не разрешает анализировать это изображение (CORS).';
+        console.error('OpenCV.js: CORS ошибка при загрузке изображения', err);
+        return null;
+    }
+    function waitForOpenCV(callback) {
+        if (window.cv && window.cv.imread) callback();
+        else setTimeout(() => waitForOpenCV(callback), 200);
+    }
+    return new Promise(resolve => {
+        waitForOpenCV(() => {
+            try {
+                // Создаём canvas для визуализации
+                const visCanvas = document.createElement('canvas');
+                visCanvas.width = imgElem.naturalWidth;
+                visCanvas.height = imgElem.naturalHeight;
+                visCanvas.style.display = 'block';
+                visCanvas.style.maxWidth = '100%';
+                visCanvas.style.margin = '8px 0';
+                const visCtx = visCanvas.getContext('2d');
+                visCtx.drawImage(testImg, 0, 0);
+                // OpenCV обработка
+                const canvas = document.createElement('canvas');
+                canvas.width = imgElem.naturalWidth;
+                canvas.height = imgElem.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(testImg, 0, 0);
+                let src = cv.imread(canvas);
+                let dst = new cv.Mat();
+                cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
+                cv.Canny(dst, dst, 50, 150, 3, false);
+                let contours = new cv.MatVector();
+                let hierarchy = new cv.Mat();
+                cv.findContours(dst, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                let sizes = [];
+                // Визуализация контуров
+                visCtx.lineWidth = 2;
+                for (let i = 0; i < contours.size(); ++i) {
+                    let color = `hsl(${(i*40)%360}, 100%, 50%)`;
+                    visCtx.strokeStyle = color;
+                    let cnt = contours.get(i);
+                    visCtx.beginPath();
+                    for (let j = 0; j < cnt.data32S.length/2; j++) {
+                        let x = cnt.data32S[j*2];
+                        let y = cnt.data32S[j*2+1];
+                        if (j === 0) visCtx.moveTo(x, y);
+                        else visCtx.lineTo(x, y);
+                    }
+                    visCtx.closePath();
+                    visCtx.stroke();
+                    // Bounding box
+                    let rect = cv.boundingRect(cnt);
+                    sizes.push(`(x:${rect.x}, y:${rect.y}, w:${rect.width}, h:${rect.height})`);
+                    visCtx.strokeStyle = color;
+                    visCtx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                }
+                let colorMap = {};
+                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                for (let i = 0; i < imgData.length; i += 4) {
+                    const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+                    const key = `${r},${g},${b}`;
+                    colorMap[key] = (colorMap[key] || 0) + 1;
+                }
+                const topColors = Object.entries(colorMap)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
+                    .join('');
+                let html = `<b>Контуры:</b> ${contours.size()}<br/>`;
+                html += `<b>Размеры объектов:</b> ${sizes.length ? sizes.join('; ') : 'Не найдено'}<br/>`;
+                html += `<b>Топ-5 цветов:</b> ${topColors}`;
+                resultElem.innerHTML = html;
+                // === Заменяем исходное изображение на canvas с контурами ===
+                if (imgElem.parentNode) imgElem.replaceWith(visCanvas);
+                console.log('OpenCV.js: анализ завершён, контуров:', contours.size());
+                src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+                resolve(visCanvas);
+            } catch (err) {
+                if (err && err.message && err.message.includes('tainted')) {
+                    resultElem.textContent = 'Ошибка: браузер не разрешает анализировать это изображение (CORS).';
+                } else {
+                    resultElem.textContent = 'Ошибка OpenCV анализа: ' + err.message;
+                }
+                console.error('OpenCV.js: ошибка анализа изображения', err);
+                resolve(null);
+            }
+        });
     });
 }
 
@@ -875,6 +1097,23 @@ async function opencvAnalyzeImage(imgElem, resultElem) {
 // Для полноценной работы с музыкой/видео — подключите соответствующие API.
 // Для Unsplash API получите access key: https://unsplash.com/developers
 // Все ключевые части подробно комментированы на русском языке.
+
+// Обновление списка доступных аудио/видео для анализа
+function updateAudioSourceList() {
+    const mediaEls = Array.from(document.querySelectorAll('audio,video'));
+    eqAudioSelect.innerHTML = '';
+    mediaEls.forEach((el, idx) => {
+        let label = el.tagName === 'AUDIO' ? 'Аудио' : 'Видео';
+        if (el.src) label += ': ' + (el.src.split('/').pop().slice(0, 30));
+        else if (el.currentSrc) label += ': ' + (el.currentSrc.split('/').pop().slice(0, 30));
+        else label += ' #' + (idx+1);
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = label;
+        eqAudioSelect.appendChild(opt);
+    });
+    eqAudioSelect.style.display = mediaEls.length > 0 ? '' : 'none';
+}
 </script>
 </body>
 </html>
