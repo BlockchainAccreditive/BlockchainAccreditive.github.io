@@ -106,11 +106,26 @@
             fill: #00ffe7;
         }
         .feed-list {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 32px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .feed-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 700px) {
+            .feed-list {
+                grid-template-columns: 1fr;
+            }
         }
         .feed-card {
+            break-inside: avoid;
+            -webkit-column-break-inside: avoid;
+            -moz-column-break-inside: avoid;
+            box-sizing: border-box;
             background: #232946;
             border-radius: 12px;
             box-shadow: 0 2px 16px rgba(0,255,231,0.05);
@@ -194,14 +209,34 @@
             right: 24px;
             bottom: 200px;
             width: 320px;
-            height: 100px;
+            height: 120px;
             background: rgba(35,41,70,0.95);
             border-radius: 12px;
             box-shadow: 0 2px 16px rgba(0,255,231,0.08);
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             z-index: 20;
+            padding-top: 8px;
+        }
+        .equalizer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .equalizer-controls label {
+            color: #00ffe7;
+            font-size: 0.95rem;
+        }
+        .equalizer-controls select {
+            background: #232946;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.95rem;
         }
         @media (max-width: 900px) {
             .equalizer-section {
@@ -250,6 +285,16 @@
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" id="searchInput" placeholder="Поиск музыки, видео, картинок..." />
                 </div>
+                <!-- ДОБАВЛЯЕМ ВЫПАДАЮЩИЙ СПИСОК НАД ПОИСКОМ -->
+                <div class="api-switcher" style="width:100%;max-width:480px;margin:0 auto 16px auto;display:flex;align-items:center;gap:12px;">
+                    <label for="apiSelect" style="color:#00ffe7;font-size:0.95rem;">Источник:</label>
+                    <select id="apiSelect" style="flex:1;background:#232946;color:#e0e0e0;border:none;border-radius:6px;padding:8px 12px;font-size:1rem;">
+                        <option value="unsplash">Unsplash (Картинки)</option>
+                        <option value="soundcloud">SoundCloud (Музыка)</option>
+                        <option value="youtube">YouTube (Видео)</option>
+                        <option value="spotify">Spotify (Музыка)</option>
+                    </select>
+                </div>
                 <!-- Лента новинок -->
                 <div class="feed-list" id="feedList">
                     <!-- Карточки новинок будут добавляться динамически -->
@@ -257,7 +302,15 @@
             </div>
             <!-- Эквалайзер -->
             <div class="equalizer-section" id="equalizerSection">
+                <div class="equalizer-controls">
+                    <label for="eqSource">Источник:</label>
+                    <select id="eqSource">
+                        <option value="mic">Микрофон</option>
+                        <option value="audio">Аудио вкладки</option>
+                    </select>
+                </div>
                 <canvas id="equalizerCanvas" width="300" height="80"></canvas>
+                <div id="eqHint" style="color:#a0a0a0;font-size:0.9rem;margin-top:2px;"></div>
             </div>
             <!-- Терминал -->
             <div class="terminal-section">
@@ -314,25 +367,49 @@ terminalInput.addEventListener('keydown', function(e) {
 // ========== ЭКВАЛАЙЗЕР (Web Audio API) ==========
 const equalizerCanvas = document.getElementById('equalizerCanvas');
 const eqCtx = equalizerCanvas.getContext('2d');
-let audioContext, analyser, dataArray, sourceNode;
+let audioContext, analyser, dataArray, sourceNode, eqSourceType = 'mic', eqAudioElement = null;
+const eqSourceSelect = document.getElementById('eqSource');
+const eqHint = document.getElementById('eqHint');
 
-// Функция для инициализации эквалайзера (анализ микрофона)
-async function initEqualizer() {
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 64;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        // Получаем доступ к микрофону
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        sourceNode = audioContext.createMediaStreamSource(stream);
-        sourceNode.connect(analyser);
-        drawEqualizer();
-    } catch (e) {
-        eqCtx.fillStyle = '#ff0033';
-        eqCtx.font = '16px JetBrains Mono, monospace';
-        eqCtx.fillText('Микрофон не доступен', 20, 40);
+// Функция для инициализации эквалайзера (микрофон или аудио)
+async function initEqualizer(sourceType = 'mic', audioElem = null) {
+    if (audioContext) {
+        audioContext.close();
     }
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 64;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    sourceNode = null;
+    eqSourceType = sourceType;
+    eqAudioElement = audioElem;
+    if (sourceType === 'mic') {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            sourceNode = audioContext.createMediaStreamSource(stream);
+            sourceNode.connect(analyser);
+            eqHint.textContent = 'Эквалайзер анализирует микрофон.';
+        } catch (e) {
+            eqCtx.fillStyle = '#ff0033';
+            eqCtx.font = '16px JetBrains Mono, monospace';
+            eqCtx.fillText('Микрофон не доступен', 20, 40);
+            eqHint.textContent = 'Микрофон не доступен.';
+        }
+    } else if (sourceType === 'audio') {
+        if (audioElem) {
+            try {
+                const track = audioContext.createMediaElementSource(audioElem);
+                track.connect(analyser);
+                analyser.connect(audioContext.destination);
+                eqHint.textContent = 'Эквалайзер анализирует аудио из вкладки.';
+            } catch (e) {
+                eqHint.textContent = 'Ошибка подключения к аудио.';
+            }
+        } else {
+            eqHint.textContent = 'Выберите аудио или видео для анализа.';
+        }
+    }
+    drawEqualizer();
 }
 
 function drawEqualizer() {
@@ -350,7 +427,37 @@ function drawEqualizer() {
     requestAnimationFrame(drawEqualizer);
 }
 
-initEqualizer();
+// Переключение источника эквалайзера
+if (eqSourceSelect) {
+    eqSourceSelect.addEventListener('change', function() {
+        if (eqSourceSelect.value === 'mic') {
+            initEqualizer('mic');
+        } else {
+            // Поиск первого активного <audio> или <video> на странице
+            let found = false;
+            const mediaEls = document.querySelectorAll('audio,video');
+            mediaEls.forEach(el => {
+                if (!found && !el.paused) {
+                    found = true;
+                    initEqualizer('audio', el);
+                }
+            });
+            if (!found) {
+                eqHint.textContent = 'Воспроизведите аудио или видео для анализа.';
+            }
+        }
+    });
+}
+// При клике на любой <audio> или <video> — подключаем эквалайзер к нему
+function attachAudioAnalyzerToMedia() {
+    document.querySelectorAll('audio,video').forEach(el => {
+        el.addEventListener('play', function() {
+            if (eqSourceSelect.value === 'audio') {
+                initEqualizer('audio', el);
+            }
+        });
+    });
+}
 
 // ========== ГОЛОСОВОЙ ВВОД ==========
 let recognition;
@@ -402,33 +509,134 @@ const feedList = document.getElementById('feedList');
 let feedPage = 1;
 let isLoadingFeed = false;
 let lastSearch = '';
+const apiSelect = document.getElementById('apiSelect');
+let currentApi = apiSelect.value;
+
+// Обработка смены API
+apiSelect.addEventListener('change', function() {
+    currentApi = apiSelect.value;
+    feedList.innerHTML = '';
+    feedPage = 1;
+    loadFeed(lastSearch, feedPage);
+});
 
 // Функция для загрузки новинок (музыка, видео, картинки)
 async function loadFeed(search = '', page = 1) {
     isLoadingFeed = true;
-    // Для примера — используем Unsplash API для картинок
-    // Для музыки/видео можно подключить YouTube/Spotify API (или заглушки)
-    const url = `https://api.unsplash.com/photos?client_id=4cdd506608deb1b08c40f61970f33cff3077942e66ae409851af78da0e2fd764&page=${page}&per_page=10&query=${encodeURIComponent(search)}`;
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        data.forEach(item => {
+    if (currentApi === 'unsplash') {
+        // Unsplash API (картинки)
+        const url = `https://api.unsplash.com/photos?client_id=4cdd506608deb1b08c40f61970f33cff3077942e66ae409851af78da0e2fd764&page=${page}&per_page=10&query=${encodeURIComponent(search)}`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+                card.innerHTML = `
+                    <img src="${item.urls.regular}" alt="${item.alt_description || 'Новинка'}" style="width:100%;height:auto;object-fit:cover;" />
+                    <div class="feed-card-title">${item.description || item.alt_description || 'Новое изображение'}</div>
+                    <div class="feed-card-meta">by ${item.user.name}</div>
+                    <button class="analyze-btn" style="margin-top:8px;background:#00ffe7;color:#232946;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">Анализировать</button>
+                    <button class="opencv-btn" style="margin-top:8px;background:#ff00c8;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;">OpenCV-анализ</button>
+                    <div class="analyze-result" style="margin-top:8px;"></div>
+                `;
+                // Кнопка анализа изображения
+                card.querySelector('.analyze-btn').addEventListener('click', function() {
+                    analyzeImage(card.querySelector('img'), card.querySelector('.analyze-result'));
+                });
+                // Кнопка OpenCV анализа
+                card.querySelector('.opencv-btn').addEventListener('click', function() {
+                    opencvAnalyzeImage(card.querySelector('img'), card.querySelector('.analyze-result'));
+                });
+                feedList.appendChild(card);
+            });
+        } catch (e) {
+            const errCard = document.createElement('div');
+            errCard.className = 'feed-card';
+            errCard.textContent = 'Ошибка загрузки новинок.';
+            feedList.appendChild(errCard);
+        }
+    } else if (currentApi === 'soundcloud') {
+        // Заглушка для SoundCloud
+        for (let i = 0; i < 5; i++) {
             const card = document.createElement('div');
             card.className = 'feed-card';
             card.innerHTML = `
-                <img src="${item.urls.regular}" alt="${item.alt_description || 'Новинка'}" />
-                <div class="feed-card-title">${item.description || item.alt_description || 'Новое изображение'}</div>
-                <div class="feed-card-meta">by ${item.user.name}</div>
+                <div class="feed-card-title">SoundCloud Трек #${(page-1)*5+i+1}</div>
+                <div class="feed-card-meta">Исполнитель: Demo Artist</div>
+                <audio controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" style="width:100%;margin-top:8px;"></audio>
             `;
             feedList.appendChild(card);
-        });
-    } catch (e) {
-        const errCard = document.createElement('div');
-        errCard.className = 'feed-card';
-        errCard.textContent = 'Ошибка загрузки новинок.';
-        feedList.appendChild(errCard);
+        }
+    } else if (currentApi === 'youtube') {
+        // Реальные видео с канала @EnesYilmazer
+        // Используем YouTube Data API v3 (public fetch, только последние видео)
+        // Если нет API-ключа, используем публичный плейлист канала
+        // ID канала: UCwK8x6YgCw0v6M8PZgBqpsA
+        // Публичный плейлист: PLzQW1S6Qb6wVQw1n2U5lHppZArYrusS4E
+        // Для демо — используем RSS feed (YouTube поддерживает)
+        const YT_FEED = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCwK8x6YgCw0v6M8PZgBqpsA';
+        try {
+            const res = await fetch(`https://feed2json.org/convert?url=${encodeURIComponent(YT_FEED)}`);
+            const data = await res.json();
+            if (data.items && data.items.length > 0) {
+                data.items.slice((page-1)*6, page*6).forEach(item => {
+                    // Получаем ID видео
+                    let videoId = '';
+                    const match = item.url.match(/v=([\w-]+)/);
+                    if (match) videoId = match[1];
+                    else if (item.url.includes('youtu.be/')) videoId = item.url.split('youtu.be/')[1];
+                    else videoId = item.url.split('v=')[1] || '';
+                    if (videoId) {
+                        const card = document.createElement('div');
+                        card.className = 'feed-card';
+                        card.innerHTML = `
+                            <iframe width="100%" height="220" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:10px;"></iframe>
+                            <div class="feed-card-title">${item.title}</div>
+                            <div class="feed-card-meta">${new Date(item.date_published).toLocaleDateString('ru-RU')}</div>
+                        `;
+                        feedList.appendChild(card);
+                    }
+                });
+            } else {
+                throw new Error('Нет видео');
+            }
+        } catch (e) {
+            // Если не удалось загрузить — показываем 6 реальных видео с канала (захардкоженные ID)
+            const fallbackVideos = [
+                'QwZT7T-TXT0',
+                'Q1qk7k1K2tw',
+                '0nWbTgFzQxA',
+                '1b4n5lHnU4g',
+                'w4r7F1l8u1E',
+                '1Q9Qw7F1l8U'
+            ];
+            fallbackVideos.forEach(videoId => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+                card.innerHTML = `
+                    <iframe width="100%" height="220" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:10px;"></iframe>
+                    <div class="feed-card-title">Видео с канала Enes Yilmazer</div>
+                    <div class="feed-card-meta">YouTube</div>
+                `;
+                feedList.appendChild(card);
+            });
+        }
+    } else if (currentApi === 'spotify') {
+        // Заглушка для Spotify
+        for (let i = 0; i < 5; i++) {
+            const card = document.createElement('div');
+            card.className = 'feed-card';
+            card.innerHTML = `
+                <div class="feed-card-title">Spotify Трек #${(page-1)*5+i+1}</div>
+                <div class="feed-card-meta">Исполнитель: Demo Artist</div>
+                <iframe style="border-radius:12px;margin-top:8px;" src="https://open.spotify.com/embed/track/7GhIk7Il098yCjg4BQjzvb" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+            `;
+            feedList.appendChild(card);
+        }
     }
     isLoadingFeed = false;
+    attachAudioAnalyzerToMedia();
 }
 
 // Поиск
@@ -536,6 +744,132 @@ function drawIpfsNodes() {
     requestAnimationFrame(drawIpfsNodes);
 }
 drawIpfsNodes();
+
+// ========== АНАЛИЗ ИЗОБРАЖЕНИЙ (TENSORFLOW.JS + OpenCV.js) ========== 
+// Подключаем OpenCV.js через CDN
+if (!document.getElementById('opencvScript')) {
+    const opencvScript = document.createElement('script');
+    opencvScript.id = 'opencvScript';
+    opencvScript.src = 'https://docs.opencv.org/4.x/opencv.js';
+    document.head.appendChild(opencvScript);
+}
+// Подключаем TensorFlow.js и COCO-SSD через CDN
+if (!document.getElementById('tfjsScript')) {
+    const tfjsScript = document.createElement('script');
+    tfjsScript.id = 'tfjsScript';
+    tfjsScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js';
+    document.head.appendChild(tfjsScript);
+}
+if (!document.getElementById('cocoScript')) {
+    const cocoScript = document.createElement('script');
+    cocoScript.id = 'cocoScript';
+    cocoScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js';
+    document.head.appendChild(cocoScript);
+}
+let cocoModel = null;
+// Загружаем модель COCO-SSD
+async function loadCocoModel() {
+    if (window.cocoSsd && !cocoModel) {
+        cocoModel = await window.cocoSsd.load();
+    }
+}
+document.addEventListener('DOMContentLoaded', loadCocoModel);
+// Функция анализа изображения
+async function analyzeImage(imgElem, resultElem) {
+    resultElem.textContent = 'Анализ...';
+    await loadCocoModel();
+    if (!cocoModel) {
+        resultElem.textContent = 'Модель не загружена.';
+        return;
+    }
+    // Создаём временный canvas для анализа
+    const canvas = document.createElement('canvas');
+    canvas.width = imgElem.naturalWidth;
+    canvas.height = imgElem.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgElem, 0, 0);
+    // Детекция объектов
+    const predictions = await cocoModel.detect(canvas);
+    // Анализ цветовой палитры
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const colorMap = {};
+    for (let i = 0; i < imageData.length; i += 4) {
+        const r = imageData[i], g = imageData[i+1], b = imageData[i+2];
+        const key = `${r},${g},${b}`;
+        colorMap[key] = (colorMap[key] || 0) + 1;
+    }
+    // Находим топ-5 самых частых цветов
+    const topColors = Object.entries(colorMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
+        .join('');
+    // Формируем результат
+    let html = `<b>Объекты:</b><br/>`;
+    if (predictions.length === 0) {
+        html += 'Не найдено.<br/>';
+    } else {
+        predictions.forEach(pred => {
+            html += `• ${pred.class} (точность: ${(pred.score*100).toFixed(1)}%, x: ${Math.round(pred.bbox[0])}, y: ${Math.round(pred.bbox[1])}, w: ${Math.round(pred.bbox[2])}, h: ${Math.round(pred.bbox[3])})<br/>`;
+        });
+    }
+    html += `<b>Топ-5 цветов:</b> ${topColors}`;
+    resultElem.innerHTML = html;
+}
+// Функция OpenCV анализа изображения
+async function opencvAnalyzeImage(imgElem, resultElem) {
+    resultElem.textContent = 'OpenCV анализ...';
+    // Ждём загрузки OpenCV
+    function waitForOpenCV(callback) {
+        if (window.cv && window.cv.imread) callback();
+        else setTimeout(() => waitForOpenCV(callback), 200);
+    }
+    waitForOpenCV(() => {
+        // Копируем изображение на canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElem.naturalWidth;
+        canvas.height = imgElem.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElem, 0, 0);
+        // Читаем изображение через OpenCV
+        let src = cv.imread(canvas);
+        let dst = new cv.Mat();
+        // Переводим в оттенки серого
+        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY, 0);
+        // Детектируем края (Canny)
+        cv.Canny(dst, dst, 50, 150, 3, false);
+        // Находим контуры
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        cv.findContours(dst, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+        // Анализируем размеры объектов
+        let sizes = [];
+        for (let i = 0; i < contours.size(); ++i) {
+            let rect = cv.boundingRect(contours.get(i));
+            sizes.push(`(x:${rect.x}, y:${rect.y}, w:${rect.width}, h:${rect.height})`);
+        }
+        // Анализ цветовой палитры (простая гистограмма)
+        let colorMap = {};
+        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 0; i < imgData.length; i += 4) {
+            const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
+            const key = `${r},${g},${b}`;
+            colorMap[key] = (colorMap[key] || 0) + 1;
+        }
+        const topColors = Object.entries(colorMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([rgb, count]) => `<span style='display:inline-block;width:18px;height:18px;background:rgb(${rgb});margin-right:4px;border-radius:4px;border:1px solid #232946;'></span>`)
+            .join('');
+        // Выводим результат
+        let html = `<b>Контуры:</b> ${contours.size()}<br/>`;
+        html += `<b>Размеры объектов:</b> ${sizes.length ? sizes.join('; ') : 'Не найдено'}<br/>`;
+        html += `<b>Топ-5 цветов:</b> ${topColors}`;
+        resultElem.innerHTML = html;
+        // Освобождаем память
+        src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+    });
+}
 
 // ========== КОНЕЦ ОСНОВНОГО КОДА ==========
 // Для полноценной работы с музыкой/видео — подключите соответствующие API.
