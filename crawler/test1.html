@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/helia/dist/index.min.js"></script>
     <script src="https://unpkg.com/@helia/ipfs-connector/dist/index.min.js"></script>
     <style>
-            ::-webkit-scrollbar {width: 3px;} 
+         ::-webkit-scrollbar {width: 3px;} 
         body {
             margin: 0;
             padding: 0;
@@ -272,7 +272,10 @@
     </div>
 </div>
 <script>
-
+// ================= ОПИСАНИЕ =================
+// Это приложение — демонстрация футуристичного UI для Dribbble/Behance.
+// Включает терминал с голосовым вводом, эквалайзер, бесконечную ленту новинок и поиск.
+// Все ключевые части подробно комментируются на русском языке.
 
 // ========== ТЕРМИНАЛ С ГОЛОСОВЫМ ВВОДОМ ==========
 // История команд терминала
@@ -323,10 +326,12 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     recognition.onstart = function() {
         isRecording = true;
         voiceBtn.classList.add('active');
+        addTerminalLine('Голосовой ввод: старт');
     };
     recognition.onend = function() {
         isRecording = false;
         voiceBtn.classList.remove('active');
+        addTerminalLine('Голосовой ввод: завершён');
     };
     recognition.onerror = function(e) {
         addTerminalLine('Ошибка голосового ввода: ' + e.error);
@@ -336,12 +341,17 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         if (isRecording) {
             recognition.stop();
         } else {
-            recognition.start();
+            try {
+                recognition.start();
+            } catch (err) {
+                addTerminalLine('Ошибка запуска голосового ввода: ' + err.message);
+            }
         }
     });
 } else {
     voiceBtn.disabled = true;
     voiceBtn.title = 'Голосовой ввод не поддерживается';
+    addTerminalLine('Голосовой ввод не поддерживается этим браузером');
 }
 
 // ========== ЭКВАЛАЙЗЕР (Web Audio API) ==========
@@ -453,9 +463,10 @@ async function initHelia() {
         helia = await window.Helia.createHelia();
         const id = await helia.libp2p.peerId.toString();
         ipfsNodeId = id;
+        addTerminalLine('Helia (IPFS) node started: ' + id);
         console.log('Helia (IPFS) node started:', id);
-        // Можно добавить отображение статуса в UI
     } catch (e) {
+        addTerminalLine('Ошибка инициализации Helia: ' + e.message);
         console.error('Ошибка инициализации Helia:', e);
     }
 }
