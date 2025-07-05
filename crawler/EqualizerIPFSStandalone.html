@@ -20,20 +20,20 @@
             justify-content: center;
         }
         #eqCanvas {
-            width: 320px;
-            height: 100px;
+            width: 480px;
+            height: 160px;
             background: #232946;
-            border-radius: 12px;
-            box-shadow: 0 2px 16px rgba(0,255,231,0.08);
+            border-radius: 16px;
+            box-shadow: 0 2px 32px rgba(0,255,231,0.12);
             margin-bottom: 32px;
             display: block;
         }
         #ipfsCanvas {
-            width: 600px;
-            height: 300px;
+            width: 700px;
+            height: 340px;
             background: #1a1d2b;
-            border-radius: 12px;
-            box-shadow: 0 2px 16px rgba(0,255,231,0.08);
+            border-radius: 16px;
+            box-shadow: 0 2px 32px rgba(0,255,231,0.12);
             display: block;
         }
         .label {
@@ -45,21 +45,23 @@
     </style>
 </head>
 <body>
-    <div class="label">Эквалайзер (микрофон)</div>
-    <canvas id="eqCanvas" width="320" height="100"></canvas>
-    <div class="label">IPFS Helia визуализация</div>
-    <canvas id="ipfsCanvas" width="600" height="300"></canvas>
+    <div class="label">Эквалайзер (микрофон, динамическая визуализация)</div>
+    <canvas id="eqCanvas" width="480" height="160"></canvas>
+    <div class="label">IPFS Helia визуализация (динамика)</div>
+    <canvas id="ipfsCanvas" width="700" height="340"></canvas>
 <script>
-// ====== Эквалайзер (анализатор микрофона) ======
+// ====== Эквалайзер (анализатор микрофона, динамика) ======
 const eqCanvas = document.getElementById('eqCanvas');
 const eqCtx = eqCanvas.getContext('2d');
-let audioContext, analyser, dataArray, sourceNode;
+let audioContext, analyser, dataArray, sourceNode, timeData;
+
 async function initEqualizer() {
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 64;
+        analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
+        timeData = new Uint8Array(analyser.fftSize);
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         sourceNode = audioContext.createMediaStreamSource(stream);
         sourceNode.connect(analyser);
@@ -70,26 +72,61 @@ async function initEqualizer() {
         eqCtx.fillText('Микрофон не доступен', 20, 40);
     }
 }
+
 function drawEqualizer() {
     eqCtx.clearRect(0, 0, eqCanvas.width, eqCanvas.height);
-    if (analyser && dataArray) {
+    if (analyser && dataArray && timeData) {
+        // Спектр (frequency bars)
         analyser.getByteFrequencyData(dataArray);
         for (let i = 0; i < dataArray.length; i++) {
             const val = dataArray[i];
             const x = i * (eqCanvas.width / dataArray.length);
-            const h = (val / 255) * eqCanvas.height;
-            eqCtx.fillStyle = `hsl(${180 + i * 4}, 100%, 60%)`;
+            const h = (val / 255) * eqCanvas.height * 0.7;
+            const grad = eqCtx.createLinearGradient(x, eqCanvas.height, x, eqCanvas.height - h);
+            grad.addColorStop(0, '#00ffe7');
+            grad.addColorStop(0.5, '#ff00c8');
+            grad.addColorStop(1, '#fff200');
+            eqCtx.fillStyle = grad;
+            eqCtx.shadowColor = '#00ffe7';
+            eqCtx.shadowBlur = 8;
             eqCtx.fillRect(x, eqCanvas.height - h, (eqCanvas.width / dataArray.length) - 2, h);
+            eqCtx.shadowBlur = 0;
         }
+        // Волна (oscilloscope)
+        analyser.getByteTimeDomainData(timeData);
+        eqCtx.beginPath();
+        for (let i = 0; i < timeData.length; i++) {
+            const x = i * (eqCanvas.width / timeData.length);
+            const y = (timeData[i] / 255) * eqCanvas.height;
+            if (i === 0) eqCtx.moveTo(x, y);
+            else eqCtx.lineTo(x, y);
+        }
+        eqCtx.strokeStyle = '#fff200';
+        eqCtx.lineWidth = 2;
+        eqCtx.shadowColor = '#ff00c8';
+        eqCtx.shadowBlur = 8;
+        eqCtx.stroke();
+        eqCtx.shadowBlur = 0;
+        // Бегущая линия (moving highlight)
+        const now = Date.now();
+        const pos = (now % 2000) / 2000 * eqCanvas.width;
+        eqCtx.beginPath();
+        eqCtx.moveTo(pos, 0);
+        eqCtx.lineTo(pos, eqCanvas.height);
+        eqCtx.strokeStyle = 'rgba(0,255,231,0.2)';
+        eqCtx.lineWidth = 3;
+        eqCtx.stroke();
     }
     requestAnimationFrame(drawEqualizer);
 }
 initEqualizer();
 
-// ====== IPFS Helia визуализация ======
+// ====== IPFS Helia динамическая визуализация ======
 const ipfsCanvas = document.getElementById('ipfsCanvas');
 const ipfsCtx = ipfsCanvas.getContext('2d');
 let helia, ipfsNodeId = null;
+let ipfsAnimAngle = 0;
+let ipfsPulse = 0;
 async function initHelia() {
     try {
         helia = await window.Helia.createHelia();
@@ -106,45 +143,59 @@ function drawIpfsNodes() {
     ipfsCtx.clearRect(0, 0, ipfsCanvas.width, ipfsCanvas.height);
     const cx = ipfsCanvas.width / 2;
     const cy = ipfsCanvas.height / 2;
-    // Центральная нода
+    const t = Date.now() / 1000;
+    ipfsAnimAngle += 0.01;
+    ipfsPulse = 1 + 0.08 * Math.sin(t * 2);
+    // Центральная нода (пульсация)
+    ipfsCtx.save();
     ipfsCtx.beginPath();
-    ipfsCtx.arc(cx, cy, 32, 0, 2 * Math.PI);
+    ipfsCtx.arc(cx, cy, 36 * ipfsPulse, 0, 2 * Math.PI);
     ipfsCtx.fillStyle = '#00ffe7';
     ipfsCtx.shadowColor = '#00ffe7';
-    ipfsCtx.shadowBlur = 16;
+    ipfsCtx.shadowBlur = 32 * ipfsPulse;
     ipfsCtx.fill();
     ipfsCtx.shadowBlur = 0;
-    // Соседние ноды (заглушка)
-    const neighborCount = 6;
-    const radius = 100;
+    ipfsCtx.restore();
+    // Соседние ноды (вращение и пульсация)
+    const neighborCount = 8;
+    const baseRadius = 120;
     for (let i = 0; i < neighborCount; i++) {
-        const angle = (2 * Math.PI / neighborCount) * i;
-        const nx = cx + Math.cos(angle) * radius;
-        const ny = cy + Math.sin(angle) * radius;
-        // Линия к соседу
+        const angle = ipfsAnimAngle + (2 * Math.PI / neighborCount) * i;
+        const nx = cx + Math.cos(angle) * (baseRadius + 12 * Math.sin(t * 1.5 + i));
+        const ny = cy + Math.sin(angle) * (baseRadius + 12 * Math.cos(t * 1.5 + i));
+        // Пульсирующая линия к соседу
+        ipfsCtx.save();
         ipfsCtx.beginPath();
         ipfsCtx.moveTo(cx, cy);
         ipfsCtx.lineTo(nx, ny);
-        ipfsCtx.strokeStyle = '#2e3350';
-        ipfsCtx.lineWidth = 2;
+        ipfsCtx.strokeStyle = `rgba(0,255,231,${0.5 + 0.3 * Math.abs(Math.sin(t + i))})`;
+        ipfsCtx.lineWidth = 3 + 2 * Math.abs(Math.sin(t * 2 + i));
+        ipfsCtx.shadowColor = '#00ffe7';
+        ipfsCtx.shadowBlur = 8;
         ipfsCtx.stroke();
-        // Соседняя нода
+        ipfsCtx.shadowBlur = 0;
+        ipfsCtx.restore();
+        // Соседняя нода (пульсация)
+        ipfsCtx.save();
         ipfsCtx.beginPath();
-        ipfsCtx.arc(nx, ny, 18, 0, 2 * Math.PI);
+        const pulse = 1 + 0.15 * Math.sin(t * 2 + i);
+        ipfsCtx.arc(nx, ny, 20 * pulse, 0, 2 * Math.PI);
         ipfsCtx.fillStyle = '#232946';
         ipfsCtx.fill();
         ipfsCtx.beginPath();
-        ipfsCtx.arc(nx, ny, 10, 0, 2 * Math.PI);
+        ipfsCtx.arc(nx, ny, 12 * pulse, 0, 2 * Math.PI);
         ipfsCtx.fillStyle = '#00ffe788';
         ipfsCtx.fill();
+        ipfsCtx.restore();
     }
     // ID вашей ноды (если есть)
     if (ipfsNodeId) {
-        ipfsCtx.font = 'bold 14px JetBrains Mono, monospace';
+        ipfsCtx.font = 'bold 16px JetBrains Mono, monospace';
         ipfsCtx.fillStyle = '#fff';
         ipfsCtx.textAlign = 'center';
-        ipfsCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 4);
+        ipfsCtx.fillText(ipfsNodeId.slice(0, 8) + '...', cx, cy + 6);
     }
+    requestAnimationFrame(drawIpfsNodes);
 }
 initHelia();
 </script>
