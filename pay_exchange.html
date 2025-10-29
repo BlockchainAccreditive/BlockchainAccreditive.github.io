@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Покупка исходного кода | Оплата через ЮMoney</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0A0F1C 0%, #121826 100%);
+            color: #F5F7FF;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            color: #6C63FF;
+        }
+
+        .subtitle {
+            color: #8C93B3;
+            font-size: 1.1rem;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            border-color: #6C63FF;
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.2);
+        }
+
+        .pricing-card.featured {
+            border-color: #00D4AA;
+            position: relative;
+        }
+
+        .pricing-card.featured::before {
+            content: 'РЕКОМЕНДУЕМ';
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: #00D4AA;
+            color: white;
+            padding: 5px 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transform: rotate(45deg);
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6C63FF, #5651D9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+        }
+
+        .featured .card-icon {
+            background: linear-gradient(135deg, #00D4AA, #00C896);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .card-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #6C63FF, #00D4AA);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .featured .card-price {
+            background: linear-gradient(to right, #00D4AA, #00C896);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .card-period {
+            color: #8C93B3;
+            margin-bottom: 20px;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .features-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .features-list i {
+            color: #00D4AA;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #6C63FF;
+            color: white;
+            box-shadow: 0 5px 15px rgba(108, 99, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #5651D9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .featured .btn-primary {
+            background: #00D4AA;
+            box-shadow: 0 5px 15px rgba(0, 212, 170, 0.3);
+        }
+
+        .featured .btn-primary:hover {
+            background: #00C896;
+            box-shadow: 0 8px 20px rgba(0, 212, 170, 0.4);
+        }
+
+        .payment-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .payment-info p {
+            margin-bottom: 10px;
+            color: #8C93B3;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #00C896;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .yoomoney-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .yoomoney-badge img {
+            height: 24px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+            
+            .pricing-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-card.featured::before {
+                font-size: 0.7rem;
+                right: -35px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-exchange-alt logo-icon"></i>
+                <span>CryptoExchange</span>
+            </div>
+            <p class="subtitle">Приобретение исходного кода платформы</p>
+        </div>
+
+        <div class="pricing-cards">
+            <!-- Фронтенд -->
+            <div class="pricing-card">
+                <div class="card-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <h3 class="card-title">Фронтенд</h3>
+                <div class="card-price">$50,000</div>
+                <p class="card-period">Единоразовый платеж</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> Адаптивный дизайн</li>
+                    <li><i class="fas fa-check"></i> Полная документация</li>
+                    <li><i class="fas fa-check"></i> 30 дней поддержки</li>
+                    <li><i class="fas fa-check"></i> PSD макеты</li>
+                    <li><i class="fas fa-check"></i> Исходные файлы</li>
+                </ul>
+                <button class="btn btn-primary pulse" onclick="redirectToYooMoney('frontend')">
+                    <i class="fas fa-shopping-cart"></i> Приобрести фронтенд
+                </button>
+            </div>
+
+            <!-- Бэкенд -->
+            <div class="pricing-card">
+                <div class="card-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <h3 class="card-title">Бэкенд</h3>
+                <div class="card-price">$100,000</div>
+                <p class="card-period">Единоразовый платеж</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> API интеграции</li>
+                    <li><i class="fas fa-check"></i> База данных</li>
+                    <li><i class="fas fa-check"></i> Система безопасности</li>
+                    <li><i class="fas fa-check"></i> 60 дней поддержки</li>
+                    <li><i class="fas fa-check"></i> Деплой-инструкции</li>
+                </ul>
+         <!-- <button class="btn btn-primary pulse" onclick="redirectToYooMoney('backend')"> -->  
+              <button class="btn btn-primary pulse" onclick="redirectToYooMoney('backend')">
+                    <i class="fas fa-shopping-cart"></i> Приобрести бэкенд <br> (СКОРО)
+                </button>
+            </div>
+
+            <!-- Полная версия -->
+            <div class="pricing-card featured">
+                <div class="card-icon">
+                    <i class="fas fa-code"></i>
+                </div>
+                <h3 class="card-title">Полная версия</h3>
+                <div class="card-price">$120,000</div>
+                <p class="card-period">Единоразовый платеж</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> Весь исходный код</li>
+                    <li><i class="fas fa-check"></i> Пожизненные обновления</li>
+                    <li><i class="fas fa-check"></i> 90 дней поддержки</li>
+                    <li><i class="fas fa-check"></i> White-label лицензия</li>
+                    <li><i class="fas fa-check"></i> Приоритетная поддержка</li>
+                </ul>
+           <!-- <button class="btn btn-primary pulse" onclick="redirectToYooMoney('full')"> -->
+                <button class="btn btn-primary pulse" onclick="redirectToYooMoney('full')">
+                    <i class="fas fa-rocket"></i> Приобрести полную версию <br> (СКОРО)
+                </button>
+            </div>
+        </div>
+
+        <div class="payment-info">
+            <p><i class="fas fa-lock"></i> Безопасная оплата через ЮMoney</p>
+            <p>После оплаты вы получите доступ к исходному коду в течение 24 часов</p>
+            <div class="secure-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Гарантия безопасности</span>
+            </div>
+            <div class="yoomoney-badge">
+                <span>Оплата через</span>
+                <svg width="80" height="24" viewBox="0 0 80 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.8 0H0V24H20.8C27.36 24 32.8 18.56 32.8 12C32.8 5.44 27.36 0 20.8 0Z" fill="#FFCC00"/>
+                    <path d="M15.2 12C15.2 14.64 13.04 16.8 10.4 16.8C7.76 16.8 5.6 14.64 5.6 12C5.6 9.36 7.76 7.2 10.4 7.2C13.04 7.2 15.2 9.36 15.2 12Z" fill="white"/>
+                    <path d="M25.6 12C25.6 14.64 23.44 16.8 20.8 16.8C18.16 16.8 16 14.64 16 12C16 9.36 18.16 7.2 20.8 7.2C23.44 7.2 25.6 9.36 25.6 12Z" fill="white"/>
+                    <path d="M40 7.2H36.8V16.8H40C42.64 16.8 44.8 14.64 44.8 12C44.8 9.36 42.64 7.2 40 7.2Z" fill="white"/>
+                    <path d="M52.8 7.2H49.6V16.8H52.8C55.44 16.8 57.6 14.64 57.6 12C57.6 9.36 55.44 7.2 52.8 7.2Z" fill="white"/>
+                    <path d="M68.8 7.2H65.6V16.8H68.8C71.44 16.8 73.6 14.64 73.6 12C73.6 9.36 71.44 7.2 68.8 7.2Z" fill="white"/>
+                    <path d="M80 7.2H76.8V16.8H80V7.2Z" fill="white"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL для оплаты через ЮMoney
+        const YOOMONEY_URL = "https://yoomoney.ru/bill/pay/1DMMJE8K149.251029";
+        
+        function redirectToYooMoney(product) {
+            // Сохраняем информацию о выбранном продукте
+            localStorage.setItem('selectedProduct', product);
+            
+            // Добавляем информацию о продукте в URL для отслеживания
+            const urlWithParams = `${YOOMONEY_URL}?product=${product}`;
+            
+            // Перенаправляем на страницу оплаты
+            window.location.href = urlWithParams;
+        }
+        
+        // Проверяем, было ли уже совершено перенаправление
+        // (это нужно для предотвращения повторных кликов)
+        let redirecting = false;
+        
+        // Добавляем обработчики для всех кнопок
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn-primary');
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (redirecting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    redirecting = true;
+                    
+                    // Добавляем индикатор загрузки
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Перенаправление...';
+                    button.disabled = true;
+                    
+                    // Определяем продукт по тексту кнопки
+                    let product = 'full';
+                    if (button.textContent.includes('фронтенд')) product = 'frontend';
+                    if (button.textContent.includes('бэкенд')) product = 'backend';
+                    
+                    // Задержка для отображения индикатора загрузки
+                    setTimeout(() => {
+                        redirectToYooMoney(product);
+                    }, 1000);
+                });
+            });
+        });
+        
+        // Дополнительная информация для пользователя
+        console.log('Информация о продуктах:');
+        console.log('- Фронтенд: $50,000 - Полный адаптивный интерфейс');
+        console.log('- Бэкенд: $100,000 - Серверная часть с API');
+        console.log('- Полная версия: $120,000 - Весь код + обновления + поддержка');
+    </script>
+</body>
+</html>
