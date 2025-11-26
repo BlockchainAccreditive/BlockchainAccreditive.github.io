@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>CargoX eBOL Demo — тестовая интеграция</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1120;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 24px 0 8px;
+      border-bottom: 1px solid #1f2937;
+      padding-bottom: 4px;
+    }
+    p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #9ca3af;
+    }
+    .section {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      background: radial-gradient(circle at 0 0, rgba(56,189,248,0.12), rgba(15,23,42,0.96));
+      border: 1px solid rgba(148,163,184,0.25);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px 24px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: #d1d5db;
+      margin-bottom: 4px;
+    }
+    input[type="text"],
+    input[type="password"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 13px;
+    }
+    input[type="file"] {
+      padding: 4px;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #04101f;
+      font-weight: 600;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.35),
+                  0 12px 22px rgba(22,163,74,0.35);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.08s ease;
+    }
+    button.secondary {
+      background: linear-gradient(135deg, #0ea5e9, #0369a1);
+      color: #e5e7eb;
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.4),
+                  0 10px 18px rgba(8,47,73,0.65);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+    button:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.5),
+                  0 16px 26px rgba(22,163,74,0.45);
+    }
+    button.secondary:not(:disabled):hover {
+      box-shadow: 0 0 0 1px rgba(56,189,248,0.55),
+                  0 16px 26px rgba(8,47,73,0.85);
+    }
+    .small {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .token-output,
+    .log-output {
+      background: #020617;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      padding: 8px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.8);
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.35);
+    }
+    .error {
+      color: #fecaca;
+    }
+    .ok {
+      color: #bbf7d0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>CargoX eBOL Demo</h1>
+    <p>
+      Тестовая страница: получаем OAuth-токен CargoX по <strong>client_credentials</strong> и создаём
+      <strong>standard envelope</strong>, в который кладём файл eBOL (PDF) с метаданными.
+      В реальной системе всё это логичнее выносить в backend.
+    </p>
+    <span class="badge">
+      <span class="badge-dot"></span>
+      API v3 · Integration scenarios 3.2 + 3.4
+    </span>
+
+    <!-- 1. OAuth: client_credentials -->
+    <div class="section">
+      <h2>1. Авторизация (OAuth client_credentials)</h2>
+      <p>
+        Шаг 1: у вас должны быть <code>client_id</code> и <code>client_secret</code>, выданные CargoX для интеграции
+        (см. разделы 3.2 и 4.2 документации по интеграции). :contentReference[oaicite:1]{index=1}
+      </p>
+      <div class="grid">
+        <div>
+          <label for="client_id">Client ID</label>
+          <input id="client_id" type="text" placeholder="например: Y6SHcE… (ваш ID)" />
+          <div class="small">
+            Идентификатор стороннего приложения (third-party / integration app).
+          </div>
+        </div>
+        <div>
+          <label for="client_secret">Client Secret</label>
+          <input id="client_secret" type="password" placeholder="секрет приложения" />
+          <div class="small">
+            Хранится только на сервере; здесь показан для теста.
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btnGetToken" type="button">Получить access token</button>
+        <button id="btnClearToken" type="button" class="secondary">Сбросить токен</button>
+      </div>
+      <div class="small">
+        Запрос идёт на <code>https://cargox.digital/oauth/token/</code> с grant_type=<code>client_credentials</code> и scope=<code>read write</code>. :contentReference[oaicite:2]{index=2}
+      </div>
+      <div style="margin-top: 10px;">
+        <label>Текущий токен</label>
+        <div id="tokenBox" class="token-output">Токен ещё не получен.</div>
+      </div>
+    </div>
+
+    <!-- 2. Envelope + eBOL -->
+    <div class="section">
+      <h2>2. Создание standard envelope с eBOL</h2>
+      <p>
+        Шаг 2: используя <strong>Bearer access_token</strong>, создаём стандартный конверт
+        (<code>envelope-standard</code>) и прикладываем туда файл eBOL (коносамент) с типом документа и метаданными,
+        по примеру из раздела 3.4.2 документации. :contentReference[oaicite:3]{index=3}
+      </p>
+
+      <div class="grid">
+        <div>
+          <label for="recipient_id">Recipient inbox ID (получатель)</label>
+          <input id="recipient_id" type="text" placeholder="UUID inbox получателя" />
+          <div class="small">
+            <code>recipient_id</code> — идентификатор inbox компании-получателя на CargoX.
+          </div>
+        </div>
+        <div>
+          <label for="company_id">Company ID (ваша компания, опционально)</label>
+          <input id="company_id" type="text" placeholder="UUID вашей компании" />
+          <div class="small">
+            <code>company_id</code> нужен, если приложение работает от имени нескольких компаний.
+          </div>
+        </div>
+        <div>
+          <label for="inbox_id">Inbox ID (опционально)</label>
+          <input id="inbox_id" type="text" placeholder="UUID вашего inbox (если их несколько)" />
+        </div>
+        <div>
+          <label for="pay_to_collect">Pay to collect</label>
+          <input id="pay_to_collect" type="text" placeholder="False или True" value="False" />
+          <div class="small">
+            Строка <code>"False"</code> или <code>"True"</code>, по примеру CargoX.
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:15px;margin-top:20px;">Файл eBOL и метаданные</h3>
+      <div class="grid">
+        <div>
+          <label for="ebol_file">Файл eBOL (PDF)</label>
+          <input id="ebol_file" type="file" accept=".pdf,.doc,.docx,.tif,.tiff,.png,.jpg,.jpeg" />
+          <div class="small">
+            Для теста — любой файл; в проде — реальный eBOL.
+          </div>
+        </div>
+        <div>
+          <label for="doc_type">document_type (тип документа)</label>
+          <input id="doc_type" type="text" value="BOL" />
+          <div class="small">
+            Конкретный код типа документа (<code>document_type</code>) лучше уточнить у CargoX.
+            В примерах используют <code>INV</code>, <code>GOO</code> и т.п. :contentReference[oaicite:4]{index=4}
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:12px;">
+        <div>
+          <label for="doc_id">document_id (внутренний ID документа)</label>
+          <input id="doc_id" type="text" placeholder="например: EBL-2025-0001" />
+        </div>
+        <div>
+          <label for="meta_internal">Метаданные: Internal number</label>
+          <input id="meta_internal" type="text" placeholder="Internal number / внутренний номер" />
+        </div>
+        <div>
+          <label for="meta_agent">Метаданные: Release agent</label>
+          <input id="meta_agent" type="text" placeholder="Release agent" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnCreateEnvelope" type="button">Создать envelope-standard</button>
+      </div>
+      <div class="small">
+        Вызов идёт на <code>https://cargox.digital/api/v3/integrations/envelope-standard/</code> с
+        <code>Authorization: Bearer &lt;access_token&gt;</code> и полями <code>recipient_id</code>,
+        <code>documents</code>, <code>documents_metadata</code>, <code>company_id</code>, <code>pay_to_collect</code> и т.д. :contentReference[oaicite:5]{index=5}
+      </div>
+
+      <div style="margin-top:10px;">
+        <label>Лог / ответ API</label>
+        <div id="logBox" class="log-output">Ожидание действий…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Глобальное состояние токена
+    let accessToken = null;
+
+    const tokenBox = document.getElementById('tokenBox');
+    const logBox = document.getElementById('logBox');
+    const btnGetToken = document.getElementById('btnGetToken');
+    const btnClearToken = document.getElementById('btnClearToken');
+    const btnCreateEnvelope = document.getElementById('btnCreateEnvelope');
+
+    function log(message, type = 'info') {
+      const ts = new Date().toISOString();
+      const colorPrefix = type === 'error' ? '[ОШИБКА]' : '[OK]';
+      const line = `${ts} ${colorPrefix} ${message}\n`;
+      logBox.textContent += line;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function setTokenBox(text, ok = false) {
+      tokenBox.textContent = text;
+      tokenBox.classList.toggle('ok', ok);
+      tokenBox.classList.toggle('error', !ok);
+    }
+
+    async function getToken() {
+      const clientId = document.getElementById('client_id').value.trim();
+      const clientSecret = document.getElementById('client_secret').value.trim();
+
+      if (!clientId || !clientSecret) {
+        setTokenBox('Нужны client_id и client_secret.', false);
+        log('Не заданы client_id / client_secret', 'error');
+        return;
+      }
+
+      btnGetToken.disabled = true;
+      setTokenBox('Запрашиваем токен у CargoX…', false);
+      log('Запрос токена (grant_type=client_credentials)…');
+
+      try {
+        const body = new URLSearchParams();
+        body.set('grant_type', 'client_credentials');
+        body.set('scope', 'read write');
+
+        const res = await fetch('https://cargox.digital/oauth/token/', {
+          method: 'POST',
+          headers: {
+            // Basic auth: client_id:client_secret
+            'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret),
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: body.toString()
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          accessToken = null;
+          setTokenBox('Ошибка при получении токена. См. лог.', false);
+          log(`Ответ CargoX (HTTP ${res.status}): ` + JSON.stringify(data, null, 2), 'error');
+          return;
+        }
+
+        accessToken = data.access_token || null;
+        if (!accessToken) {
+          setTokenBox('Токен не получен (нет access_token в ответе).', false);
+          log('Ответ без access_token: ' + JSON.stringify(data, null, 2), 'error');
+          return;
+        }
+
+        setTokenBox(accessToken, true);
+        log('Токен успешно получен. expires_in=' + data.expires_in, 'info');
+      } catch (e) {
+        accessToken = null;
+        setTokenBox('Ошибка сети или CORS. См. консоль.', false);
+        log('Исключение при запросе токена: ' + e.message, 'error');
+        console.error(e);
+      } finally {
+        btnGetToken.disabled = false;
+      }
+    }
+
+    function clearToken() {
+      accessToken = null;
+      setTokenBox('Токен сброшен.', false);
+      log('Токен очищен пользователем.');
+    }
+
+    async function createEnvelopeStandard() {
+      if (!accessToken) {
+        log('Нельзя создать envelope без access_token.', 'error');
+        alert('Сначала получите access token.');
+        return;
+      }
+
+      const recipientId = document.getElementById('recipient_id').value.trim();
+      const companyId = document.getElementById('company_id').value.trim();
+      const inboxId = document.getElementById('inbox_id').value.trim();
+      const payToCollect = document.getElementById('pay_to_collect').value.trim() || 'False';
+
+      const fileInput = document.getElementById('ebol_file');
+      const file = fileInput.files[0];
+
+      const docType = document.getElementById('doc_type').value.trim() || 'BOL';
+      const docId = document.getElementById('doc_id').value.trim();
+      const metaInternal = document.getElementById('meta_internal').value.trim();
+      const metaAgent = document.getElementById('meta_agent').value.trim();
+
+      if (!recipientId) {
+        alert('Нужен recipient_id (inbox получателя).');
+        return;
+      }
+      if (!file) {
+        alert('Выберите файл eBOL.');
+        return;
+      }
+
+      // Структура documents_metadata по образцу из документации.
+      const metadataObject = {};
+      metadataObject[file.name] = {
+        document_type: docType,
+        document_id: docId || undefined,
+        meta_data: JSON.stringify({
+          'Internal number': metaInternal || '',
+          'Release agent': metaAgent || ''
+        })
+      };
+      const documentsMetadata = [metadataObject];
+
+      const formData = new FormData();
+      formData.append('recipient_id', `"${recipientId}"`);
+      formData.append('documents', file);
+      formData.append('documents_metadata', JSON.stringify(documentsMetadata));
+
+      if (companyId) {
+        formData.append('company_id', `"${companyId}"`);
+      }
+      if (inboxId) {
+        formData.append('inbox_id', `"${inboxId}"`);
+      }
+      formData.append('pay_to_collect', `"${payToCollect}"`);
+
+      btnCreateEnvelope.disabled = true;
+      log('Отправляем запрос envelope-standard в CargoX…');
+
+      try {
+        const res = await fetch('https://cargox.digital/api/v3/integrations/envelope-standard/', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + accessToken
+          },
+          body: formData
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          log(`Ошибка создания envelope (HTTP ${res.status}): ` + JSON.stringify(data, null, 2), 'error');
+          alert('Ошибка при создании envelope. См. лог.');
+          return;
+        }
+
+        log('Envelope создан: ' + JSON.stringify(data, null, 2), 'info');
+        alert('Envelope создан. См. лог для деталей (envelope_id, document_token_id).');
+      } catch (e) {
+        log('Исключение при создании envelope: ' + e.message, 'error');
+        console.error(e);
+        alert('Ошибка сети или CORS. См. консоль и лог.');
+      } finally {
+        btnCreateEnvelope.disabled = false;
+      }
+    }
+
+    btnGetToken.addEventListener('click', getToken);
+    btnClearToken.addEventListener('click', clearToken);
+    btnCreateEnvelope.addEventListener('click', createEnvelopeStandard);
+  </script>
+</body>
+</html>
